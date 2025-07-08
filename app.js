@@ -100,42 +100,37 @@ function renderSeats() {
     block.appendChild(title);
 
 seatMap[seatId].forEach(playerId => {
+  const player = playerData[playerId] || {};
+  const titleText = player.title || "";
+  const titleBadge = titleText
+    ? `<span class="title-badge title-${titleText}">${titleText}</span>`
+    : "";
+
+  const rateChange = player.bonus ?? 0;
+  const rateBadge = `
+    <span class="rate-change ${
+      rateChange > 0 ? "rate-up" : rateChange < 0 ? "rate-down" : "rate-zero"
+    }">
+      ${rateChange > 0 ? "↑" : rateChange < 0 ? "↓" : "±"}${Math.abs(rateChange)}
+    </span>
+  `;
+
   const playerDiv = document.createElement("div");
   playerDiv.className = "player-entry";
 
-  const titleBadge = playerData[playerId]?.title
-    ? `<span class="title-badge title-${playerData[playerId].title}">${playerData[playerId].title}</span>`
-    : "";
-
   playerDiv.innerHTML = `
-  const rateChange = playerData[playerId]?.bonus ?? 0;
-const rateBadge = `
-  <span class="rate-change ${
-    rateChange > 0 ? "rate-up" : rateChange < 0 ? "rate-down" : "rate-zero"
-  }">
-    ${rateChange > 0 ? "↑" : rateChange < 0 ? "↓" : "±"}${Math.abs(rateChange)}
-  </span>
-`;
-
-playerDiv.innerHTML = `
-  <div>
-    <strong>${playerId}</strong>
-    ${titleBadge}
-    <span style="margin-left: 10px; color: #888;">Rate: ${playerData[playerId]?.rate ?? "??"}</span>
-    ${rateBadge}
-  </div>
-  <span class="remove-button" onclick="removePlayer('${seatId}', '${playerId}')">✖</span>
-`;
-
     <div>
       <strong>${playerId}</strong>
       ${titleBadge}
-      <span style="margin-left: 10px; color: #888;">Rate: ${playerData[playerId]?.rate ?? "??"}</span>
+      <span style="margin-left: 10px; color: #888;">Rate: ${player.rate ?? "??"}</span>
+      ${rateBadge}
     </div>
     <span class="remove-button" onclick="removePlayer('${seatId}', '${playerId}')">✖</span>
   `;
+
   block.appendChild(playerDiv);
 });
+
     seatList.appendChild(block);
   });
 }
