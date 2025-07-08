@@ -82,6 +82,7 @@ function renderSeats() {
     const block = document.createElement("div");
     block.className = "seat-block";
 
+    // 座席タイトルと削除ボタン
     const title = document.createElement("h3");
     title.textContent = `座席: ${seatId}`;
 
@@ -99,41 +100,43 @@ function renderSeats() {
     title.appendChild(removeSeat);
     block.appendChild(title);
 
-seatMap[seatId].forEach(playerId => {
-  const player = playerData[playerId] || {};
-  const titleText = player.title || "";
-  const titleBadge = titleText
-    ? `<span class="title-badge title-${titleText}">${titleText}</span>`
-    : "";
+    // 各プレイヤーを描画
+    seatMap[seatId].forEach(playerId => {
+      const player = playerData[playerId] || {};
+      const titleText = player.title || "";
+      const titleBadge = titleText
+        ? `<span class="title-badge title-${titleText}">${titleText}</span>`
+        : "";
 
-  const rateChange = player.bonus ?? 0;
-  const rateBadge = `
-    <span class="rate-change ${
-      rateChange > 0 ? "rate-up" : rateChange < 0 ? "rate-down" : "rate-zero"
-    }">
-      ${rateChange > 0 ? "↑" : rateChange < 0 ? "↓" : "±"}${Math.abs(rateChange)}
-    </span>
-  `;
+      const rateChange = player.bonus ?? 0;
+      const rateBadge = `
+        <span class="rate-change ${
+          rateChange > 0 ? "rate-up" : rateChange < 0 ? "rate-down" : "rate-zero"
+        }">
+          ${rateChange > 0 ? "↑" : rateChange < 0 ? "↓" : "±"}${Math.abs(rateChange)}
+        </span>
+      `;
 
-  const playerDiv = document.createElement("div");
-  playerDiv.className = "player-entry";
+      const playerDiv = document.createElement("div");
+      playerDiv.className = "player-entry";
 
-  playerDiv.innerHTML = `
-    <div>
-      <strong>${playerId}</strong>
-      ${titleBadge}
-      <span style="margin-left: 10px; color: #888;">Rate: ${player.rate ?? "??"}</span>
-      ${rateBadge}
-    </div>
-    <span class="remove-button" onclick="removePlayer('${seatId}', '${playerId}')">✖</span>
-  `;
+      playerDiv.innerHTML = `
+        <div>
+          <strong>${playerId}</strong>
+          ${titleBadge}
+          <span style="margin-left: 10px; color: #888;">Rate: ${player.rate ?? "??"}</span>
+          ${rateBadge}
+        </div>
+        <span class="remove-button" onclick="removePlayer('${seatId}', '${playerId}')">✖</span>
+      `;
 
-  block.appendChild(playerDiv);
-});
+      block.appendChild(playerDiv);
+    });
 
     seatList.appendChild(block);
   });
 }
+
 
 // --- プレイヤー削除 ---
 function removePlayer(seatId, playerId) {
