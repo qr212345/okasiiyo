@@ -98,3 +98,73 @@ body {
   opacity: 0.5;
   background: #ddd;
 }
+/* ボタン系 */
+button {
+  padding: 10px 16px;
+  margin: 6px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #125ba3;
+}
+
+/* メッセージ表示 */
+#messageArea {
+  background: #ffffcc;
+  color: #333;
+  padding: 8px 12px;
+  margin: 10px 0;
+  border-left: 4px solid #ffcc00;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+/* プレイヤー情報表示強化 */
+.player-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #ddd;
+  background-color: #fafafa;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.player-entry span.title-badge {
+  margin-left: 8px;
+  padding: 2px 6px;
+  font-size: 12px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.title-👑 {
+  background: gold;
+  color: black;
+}
+.title-🥈 {
+  background: silver;
+  color: black;
+}
+.title-🥉 {
+  background: #cd7f32;
+  color: white;
+}
+
+/* 固定ボタン群（画面下部右） */
+.fixed-controls {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
