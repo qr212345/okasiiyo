@@ -108,6 +108,25 @@ seatMap[seatId].forEach(playerId => {
     : "";
 
   playerDiv.innerHTML = `
+  const rateChange = playerData[playerId]?.bonus ?? 0;
+const rateBadge = `
+  <span class="rate-change ${
+    rateChange > 0 ? "rate-up" : rateChange < 0 ? "rate-down" : "rate-zero"
+  }">
+    ${rateChange > 0 ? "↑" : rateChange < 0 ? "↓" : "±"}${Math.abs(rateChange)}
+  </span>
+`;
+
+playerDiv.innerHTML = `
+  <div>
+    <strong>${playerId}</strong>
+    ${titleBadge}
+    <span style="margin-left: 10px; color: #888;">Rate: ${playerData[playerId]?.rate ?? "??"}</span>
+    ${rateBadge}
+  </div>
+  <span class="remove-button" onclick="removePlayer('${seatId}', '${playerId}')">✖</span>
+`;
+
     <div>
       <strong>${playerId}</strong>
       ${titleBadge}
