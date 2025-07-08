@@ -168,3 +168,27 @@ button:hover {
   flex-direction: column;
   gap: 10px;
 }
+.rate-change {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  vertical-align: middle;
+}
+
+.rate-up {
+  background-color: #e0f2f1;
+  color: #00796b;
+}
+
+.rate-down {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.rate-zero {
+  background-color: #eeeeee;
+  color: #666;
+}
