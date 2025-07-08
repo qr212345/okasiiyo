@@ -347,7 +347,7 @@ function saveToGoogleDrive() {
     playerData
   };
 
-  fetch("noURL/driveSave", {
+  fetch("https://script.google.com/macros/s/AKfycbwS53HVPoSnolLwEQgznGheXFv0smmjuUT6TVCmbTXqB6wW8RdatvdXLrbXL7w9mzO6/exec", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" }
