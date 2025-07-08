@@ -63,6 +63,8 @@ function handleScanSuccess(decodedText, decodedResult) {
     saveToLocalStorage();
     renderSeats();
   }
+
+  handleRankingMode(decodedText);
 }
 // --- メッセージ表示用 ---
 function displayMessage(msg) {
@@ -357,5 +359,24 @@ function saveToGoogleDrive() {
     .catch(err => {
       console.error(err);
       displayMessage("❌ Drive保存失敗");
+    });
+}
+function loadFromGoogleDrive() {
+  fetch("https://script.google.com/macros/s/AKfycbwS53HVPoSnolLwEQgznGheXFv0smmjuUT6TVCmbTXqB6wW8RdatvdXLrbXL7w9mzO6/exec")
+    .then(res => res.json())
+    .then(data => {
+      if (data.seatMap && data.playerData) {
+        seatMap = data.seatMap;
+        playerData = data.playerData;
+        displayMessage("☁ Driveから読み込み成功");
+        saveToLocalStorage();
+        renderSeats();
+      } else {
+        displayMessage("❌ データ形式が不正です");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      displayMessage("❌ Driveからの読み込み失敗");
     });
 }
