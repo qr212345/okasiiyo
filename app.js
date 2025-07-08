@@ -97,16 +97,24 @@ function renderSeats() {
     title.appendChild(removeSeat);
     block.appendChild(title);
 
-    seatMap[seatId].forEach(playerId => {
-      const playerDiv = document.createElement("div");
-      playerDiv.className = "player-entry";
-      playerDiv.innerHTML = `
-        <span>${playerId}</span>
-        <span class="remove-button" onclick="removePlayer('${seatId}', '${playerId}')">✖</span>
-      `;
-      block.appendChild(playerDiv);
-    });
+seatMap[seatId].forEach(playerId => {
+  const playerDiv = document.createElement("div");
+  playerDiv.className = "player-entry";
 
+  const titleBadge = playerData[playerId]?.title
+    ? `<span class="title-badge title-${playerData[playerId].title}">${playerData[playerId].title}</span>`
+    : "";
+
+  playerDiv.innerHTML = `
+    <div>
+      <strong>${playerId}</strong>
+      ${titleBadge}
+      <span style="margin-left: 10px; color: #888;">Rate: ${playerData[playerId]?.rate ?? "??"}</span>
+    </div>
+    <span class="remove-button" onclick="removePlayer('${seatId}', '${playerId}')">✖</span>
+  `;
+  block.appendChild(playerDiv);
+});
     seatList.appendChild(block);
   });
 }
