@@ -396,26 +396,34 @@ function saveToCSV() {
 }
 
 // --- Google Drive へ保存（Apps Script WebApp URLへPOST）---
-function saveToGoogleDrive() {
+ffunction saveToGoogleDrive() {
   const data = {
     seatMap,
     playerData
   };
 
-  fetch("https://script.google.com/macros/s/AKfycbxbmG5FCdeHE9z4XrQhd7M-YuzrG96GGHJnGbSA1gGePUB0Zua7GpYQKLPUq6S-MStM/exec", {
+  fetch("https://script.google.com/macros/s/【あなたのWebアプリURL】/exec", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" }
   })
-    .then(res => res.text())
-    .then(msg => displayMessage("☁ Drive保存成功"))
+    .then(res => res.json())
+    .then(result => {
+      if (result.status === "success") {
+        displayMessage("☁ Drive保存成功");
+      } else {
+        displayMessage("❌ 保存エラー: " + result.message);
+        console.log(result);
+      }
+    })
     .catch(err => {
       console.error(err);
       displayMessage("❌ Drive保存失敗");
     });
 }
+
 function loadFromGoogleDrive() {
-  fetch("https://script.google.com/macros/s/AKfycbxbmG5FCdeHE9z4XrQhd7M-YuzrG96GGHJnGbSA1gGePUB0Zua7GpYQKLPUq6S-MStM/exec")
+  fetch("https://script.google.com/macros/s/【あなたのWebアプリURL】/exec")
     .then(res => res.json())
     .then(data => {
       if (data.seatMap && data.playerData) {
@@ -426,6 +434,7 @@ function loadFromGoogleDrive() {
         renderSeats();
       } else {
         displayMessage("❌ データ形式が不正です");
+        console.log(data);
       }
     })
     .catch(err => {
@@ -433,3 +442,4 @@ function loadFromGoogleDrive() {
       displayMessage("❌ Driveからの読み込み失敗");
     });
 }
+
