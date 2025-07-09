@@ -198,10 +198,46 @@ function navigate(section) {
     rankingSeatId = null;
     document.getElementById("rankingList").innerHTML = "";
     displayMessage("座席QRを読み込んでください（順位登録モード）");
+
+    if (!rankingQrScanner) {
+      rankingQrScanner = new Html5Qrcode("rankingReader");
+      rankingQrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (decodedText) => {
+          if (decodedText.startsWith("table")) {
+            handleRankingMode(decodedText);
+            displayMessage(`✅ 座席QR読み取り成功: ${decodedText}`);
+
+            rankingQrScanner.stop().then(() => {
+              rankingQrScanner.clear();
+              rankingQrScanner = null;
+            });
+          } else {
+            displayMessage("⚠ 座席コードのみ読み取り可能です");
+          }
+        },
+        (err) => {
+          // 無視
+        }
+      ).catch(err => {
+        displayMessage("カメラの起動に失敗しました（順位登録）");
+        console.error(err);
+      });
+    }
   } else {
     isRankingMode = false;
+
+    // ←ここが重要！ カメラ停止
+    if (rankingQrScanner) {
+      rankingQrScanner.stop().then(() => {
+        rankingQrScanner.clear();
+        rankingQrScanner = null;
+      });
+    }
   }
 }
+
 
 // 外部サイトへ遷移
 function navigateToExternal(url) {
