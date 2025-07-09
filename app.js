@@ -396,7 +396,7 @@ function saveToCSV() {
 }
 
 // --- Google Drive へ保存（Apps Script WebApp URLへPOST）---
-ffunction saveToGoogleDrive() {
+function saveToGoogleDrive() {
   const data = {
     seatMap,
     playerData
