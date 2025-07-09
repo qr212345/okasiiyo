@@ -402,7 +402,7 @@ function saveToGoogleDrive() {
     playerData
   };
 
-  fetch("https://script.google.com/macros/s/AKfycbxQK_MleZIHWT4SDJ4_-DB_CQ7OjLbSXT_baOomJLWMF6Tq0tb4dW1eVvyHMz6hFplj/exec", {
+  fetch("https://script.google.com/macros/s/AKfycbxbmG5FCdeHE9z4XrQhd7M-YuzrG96GGHJnGbSA1gGePUB0Zua7GpYQKLPUq6S-MStM/exec", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" }
@@ -415,7 +415,7 @@ function saveToGoogleDrive() {
     });
 }
 function loadFromGoogleDrive() {
-  fetch("https://script.google.com/macros/s/AKfycbwS53HVPoSnolLwEQgznGheXFv0smmjuUT6TVCmbTXqB6wW8RdatvdXLrbXL7w9mzO6/exec")
+  fetch("https://script.google.com/macros/s/AKfycbxbmG5FCdeHE9z4XrQhd7M-YuzrG96GGHJnGbSA1gGePUB0Zua7GpYQKLPUq6S-MStM/exec")
     .then(res => res.json())
     .then(data => {
       if (data.seatMap && data.playerData) {
