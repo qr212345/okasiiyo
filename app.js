@@ -6,7 +6,7 @@ let actionHistory = []; // Undo用履歴
 const SCAN_COOLDOWN_MS = 1500;
 let lastScanTime = 0;
 let lastScannedText = "";
-
+let rankingQrScanner = null;
 // --- html5-qrcode 読み取り初期化 ---
 window.onload = () => {
   const qrReader = new Html5Qrcode("reader");
