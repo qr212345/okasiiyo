@@ -402,7 +402,7 @@ ffunction saveToGoogleDrive() {
     playerData
   };
 
-  fetch("https://script.google.com/macros/s/【あなたのWebアプリURL】/exec", {
+  fetch("https://script.google.com/macros/s/AKfycbxJo9r50HoMVHxGYG8J3c5iFEl3ohC5JZ0bQlbyhyoGYdlr_Ss2fCy7BimeTJQaL-D3/exec", {
     method: "POST",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" }
@@ -423,7 +423,7 @@ ffunction saveToGoogleDrive() {
 }
 
 function loadFromGoogleDrive() {
-  fetch("https://script.google.com/macros/s/【あなたのWebアプリURL】/exec")
+  fetch("https://script.google.com/macros/s/AKfycbxJo9r50HoMVHxGYG8J3c5iFEl3ohC5JZ0bQlbyhyoGYdlr_Ss2fCy7BimeTJQaL-D3/exec")
     .then(res => res.json())
     .then(data => {
       if (data.seatMap && data.playerData) {
