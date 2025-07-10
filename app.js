@@ -387,3 +387,5 @@ function saveToCSV() {
   a.download = "player_ranking.csv";
   a.click();
 }
+
+
