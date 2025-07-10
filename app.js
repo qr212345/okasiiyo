@@ -396,7 +396,7 @@ function saveToCSV() {
 }
 
 // --- Google Drive へ保存（Apps Script WebApp URLへPOST）---
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiyKklyyPG7wsTVfWKJmoDapG7lOco8PUyjWlMuqWxHiiipDKGpKQ1g5RpRB09pIQ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwESUgmvKzely6YHRXdp4NG3W1gkmAaWCac8FTPqcesfTCkN68JMohkc-xNXjpWJXg/exec";
 const FILE_ID = "1Sr2R_Smf-y10kC-3DGDT_OePl_JOI1OD"; // ← JSONファイルのID
 
 // --- 保存（seatMap + playerData） ---
