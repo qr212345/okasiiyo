@@ -388,7 +388,7 @@ function saveToCSV() {
   a.click();
 }
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0R9zmdmtaVXGWjPCbac9nJgL8WCpOAowJ7JEhHnpVtXdJCcFoUvRfx6atwAWQqJ8/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyYi4cau8FrfGo3JvpTTK8Y-rMbCh7Rs1HmIeLcpqJTuqtxz0k6MFJuO7gCjNtOy6s/exec';
 
 async function saveData() {
   try {
