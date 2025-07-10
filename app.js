@@ -390,22 +390,6 @@ function saveToCSV() {
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyYi4cau8FrfGo3JvpTTK8Y-rMbCh7Rs1HmIeLcpqJTuqtxz0k6MFJuO7gCjNtOy6s/exec';
 
-async function saveData() {
-  try {
-    const data = { seatMap, playerData };
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    const json = await res.json();
-    // 以下省略
-  } catch (e) {
-    displayMessage('保存失敗: ' + e.message);
-  }
-}
-
-
 window.loadData = async function() {
   try {
     const res = await fetch(SCRIPT_URL + '?action=get');
@@ -414,17 +398,17 @@ window.loadData = async function() {
 
     seatMap = json.seatMap || {};
     playerData = json.playerData || {};
-    displayMessage('データ読み込み成功');
-    console.log(seatMap, playerData);
+    displayMessage('☁ データ読み込み成功');
+    renderSeats();
   } catch (e) {
-    displayMessage('読み込み失敗: ' + e.message);
+    displayMessage('❌ 読み込み失敗: ' + e.message);
   }
 };
 
 window.saveData = async function() {
   try {
     const data = { seatMap, playerData };
-    const res = await fetch('', {
+    const res = await fetch(SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -432,12 +416,12 @@ window.saveData = async function() {
     const json = await res.json();
     if (json.error) throw new Error(json.error);
     if (json.result === 'saved') {
-      displayMessage('データ保存成功');
+      displayMessage('✅ データ保存成功');
     } else {
-      displayMessage('保存失敗');
+      displayMessage('❌ 保存失敗');
     }
   } catch (e) {
-    displayMessage('保存失敗: ' + e.message);
+    displayMessage('❌ 保存失敗: ' + e.message);
   }
 };
 
