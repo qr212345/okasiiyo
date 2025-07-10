@@ -137,7 +137,7 @@ function removePlayer(seatId, playerId) {
   const index = seatMap[seatId].indexOf(playerId);
   if (index !== -1) {
     seatMap[seatId].splice(index, 1);
-    actionHistory.push({ type: "removePlayer", seatId, playerId });
+    actionHistory.push({ type: "removePlayer", seatId, playerId, index });
     saveToLocalStorage();
     renderSeats();
   }
@@ -156,8 +156,9 @@ function undoAction() {
       seatMap[last.seatId] = seatMap[last.seatId].filter(p => p !== last.playerId);
       break;
     case "removePlayer":
-      seatMap[last.seatId].push(last.playerId);
-      break;
+  if (!seatMap[last.seatId]) seatMap[last.seatId] = [];
+  seatMap[last.seatId].splice(last.index, 0, last.playerId);
+  break;
     case "removeSeat":
       seatMap[last.seatId] = last.players;
       break;
