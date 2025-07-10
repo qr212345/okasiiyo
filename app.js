@@ -387,9 +387,28 @@ function saveToCSV() {
   a.download = "player_ranking.csv";
   a.click();
 }
- window.loadData = async function() {
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0R9zmdmtaVXGWjPCbac9nJgL8WCpOAowJ7JEhHnpVtXdJCcFoUvRfx6atwAWQqJ8/exec';
+
+async function saveData() {
   try {
-    const res = await fetch('?action=get');
+    const data = { seatMap, playerData };
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    // 以下省略
+  } catch (e) {
+    displayMessage('保存失敗: ' + e.message);
+  }
+}
+
+
+window.loadData = async function() {
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=get');
     const json = await res.json();
     if (json.error) throw new Error(json.error);
 
