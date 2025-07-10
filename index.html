@@ -6,6 +6,55 @@
   <title>ババ抜き大会管理</title>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <link rel="stylesheet" href="style.css" />
+  <script type="module">
+import { load, save, makeSig } from './sdk.mjs';
+
+const $status = document.getElementById('status');
+const $view   = document.getElementById('view');
+const $btnL   = document.getElementById('btnLoad');
+const $btnS   = document.getElementById('btnSave');
+
+let db = { rev: 0, data: { msg: 'Hello' }, sig: '' };
+
+/* ========== 共通ユーティリティ ========== */
+function show(msg, ok = true) {
+  $status.textContent = msg;
+  $status.style.color = ok ? 'green' : 'red';
+}
+
+function render() {
+  $view.textContent = JSON.stringify(db, null, 2);
+}
+
+/* ========== 処理 ========== */
+async function refresh() {
+  try {
+    db = await load();
+    render();
+    show('✅ 読み取り成功 rev=' + db.rev);
+  } catch (err) {
+    show('❌ 読み取り失敗: ' + err, false);
+  }
+}
+
+async function store() {
+  try {
+    db.data.msg = prompt('新メッセージを入力', db.data.msg);
+    if (db.data.msg === null) return;          // キャンセル
+    db.sig = await makeSig(db.data);
+    db     = await save(db.data, db.rev, db.sig);
+    render();
+    show('✅ 保存成功 rev=' + db.rev);
+  } catch (err) {
+    show('❌ 保存失敗: ' + err, false);
+  }
+}
+
+/* ========== イベント ========== */
+$btnL.onclick = refresh;
+$btnS.onclick = store;
+refresh();
+</script>
 </head>
 <body>
   <div id="app">
@@ -30,8 +79,8 @@
         <div id="seatList"></div>
         <button onclick="undoAction()">↩ Undo</button>
         <button onclick="saveToCSV()">📄 CSVで保存</button>
-        <button onclick="saveData()">☁ Driveに保存</button>
-        <button onclick="loadData()">☁ Driveから読み込み</button>
+        <button id="btnSave">☁ Driveに保存</button>
+        <button id="btnLoad">☁ Driveから読み込み</button>
         </section>
 
       <!-- 順位登録UI -->
