@@ -1,5 +1,7 @@
 // --- グローバル変数 ---
 let currentSeatId = null;
+let seatMap = {}; // 例: { table01: ["player01", "player02", ...] }
+let playerData = {}; // プレイヤーIDに紐づくレートなど
 let actionHistory = []; // Undo用履歴
 const SCAN_COOLDOWN_MS = 1500;
 let lastScanTime = 0;
