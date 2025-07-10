@@ -396,59 +396,36 @@ function saveToCSV() {
 }
 
 // --- Google Drive へ保存（Apps Script WebApp URLへPOST）---
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwESUgmvKzely6YHRXdp4NG3W1gkmAaWCac8FTPqcesfTCkN68JMohkc-xNXjpWJXg/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwnq9YGou7Tjbsia_cO7Am9s9pgalfetlbdOBhW7HT_mIZC4hkGEvakelT1Ei6mwSk/exec";
 const FILE_ID = "1Sr2R_Smf-y10kC-3DGDT_OePl_JOI1OD"; // ← JSONファイルのID
 
-// --- 保存（seatMap + playerData） ---
+// 保存（seatMapとplayerDataをDriveへ）
 function saveDataToDrive() {
-  const data = {
-    seatMap,
-    playerData
-  };
+  const data = { seatMap, playerData };
 
   fetch(`${SCRIPT_URL}?fileId=${FILE_ID}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   })
     .then(res => res.text())
     .then(msg => {
-      if (msg.includes("saved")) {
-        displayMessage("✅ Google Driveに保存しました！");
-        localStorage.setItem("seatMap", JSON.stringify(seatMap));
-        localStorage.setItem("playerData", JSON.stringify(playerData));
-      } else {
-        displayMessage("❌ 保存に失敗しました: " + msg);
-      }
+      displayMessage(msg.includes("saved") ? "✅ Driveに保存成功" : "❌ 保存失敗: " + msg);
     })
     .catch(err => {
-      console.error("保存エラー:", err);
-      displayMessage("❌ 保存エラーが発生しました");
+      displayMessage("❌ 保存エラー: " + err.message);
     });
 }
 
-// --- 復元（seatMap + playerData） ---
+// 復元（DriveからseatMapとplayerDataを読み込む）
 async function loadDataFromDrive() {
   try {
     const res = await fetch(`${SCRIPT_URL}?fileId=${FILE_ID}`);
-    if (!res.ok) throw new Error("読み込みに失敗しました");
-
     const json = await res.json();
-    if (!json.seatMap || !json.playerData) throw new Error("JSON構造が不正です");
-
-    seatMap = json.seatMap;
-    playerData = json.playerData;
-
-    localStorage.setItem("seatMap", JSON.stringify(seatMap));
-    localStorage.setItem("playerData", JSON.stringify(playerData));
-
-    currentSeatId = null;
-    updateTable(); // 座席UI更新
-    updatePlayerList(); // プレイヤー表示更新
-    updateCurrentSeatDisplay(); // 座席選択解除など
-    displayMessage("☁ Google Driveから復元しました");
-  } catch (e) {
-    console.error(e);
-    displayMessage("❌ 復元に失敗しました: " + e.message);
+    seatMap = json.seatMap || {};
+    playerData = json.playerData || {};
+    displayMessage("☁ 復元成功！");
+  } catch (err) {
+    displayMessage("❌ 復元エラー: " + err.message);
   }
 }
