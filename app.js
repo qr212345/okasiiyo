@@ -431,3 +431,12 @@ window.displayMessage = function(msg) {
   area.textContent = msg;
   setTimeout(() => (area.textContent = ''), 3000);
 };
+document.addEventListener('DOMContentLoaded', () => {
+  // ボタン要素を取得
+  const btnSave = document.getElementById('btnSave');
+  const btnLoad = document.getElementById('btnLoad');
+
+  // 既存の関数を紐付け
+  btnSave.addEventListener('click', saveData);
+  btnLoad.addEventListener('click', loadData);
+});
