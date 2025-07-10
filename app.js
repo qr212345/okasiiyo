@@ -387,5 +387,45 @@ function saveToCSV() {
   a.download = "player_ranking.csv";
   a.click();
 }
+ 
+async function loadData() {
+    try {
+      const res = await fetch('?action=get');
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
 
+      seatMap = json.seatMap || {};
+      playerData = json.playerData || {};
+      displayMessage('データ読み込み成功');
+      console.log(seatMap, playerData);
+    } catch (e) {
+      displayMessage('読み込み失敗: ' + e.message);
+    }
+  }
+
+  async function saveData() {
+    try {
+      const data = { seatMap, playerData };
+      const res = await fetch('', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+      if (json.result === 'saved') {
+        displayMessage('データ保存成功');
+      } else {
+        displayMessage('保存失敗');
+      }
+    } catch (e) {
+      displayMessage('保存失敗: ' + e.message);
+    }
+  }
+
+  function displayMessage(msg) {
+    const area = document.getElementById('messageArea');
+    area.textContent = msg;
+    setTimeout(() => (area.textContent = ''), 3000);
+  }
 
