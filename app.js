@@ -66,13 +66,6 @@ function handleScanSuccess(decodedText, decodedResult) {
 
   handleRankingMode(decodedText);
 }
-// --- メッセージ表示用 ---
-function displayMessage(msg) {
-  const area = document.getElementById("messageArea");
-  area.textContent = msg;
-  setTimeout(() => (area.textContent = ""), 4000);
-}
-
 // --- 座席＋生徒一覧の描画 ---
 function renderSeats() {
   const seatList = document.getElementById("seatList");
@@ -393,39 +386,4 @@ function saveToCSV() {
   a.href = url;
   a.download = "player_ranking.csv";
   a.click();
-}
-
-// --- Google Drive へ保存（Apps Script WebApp URLへPOST）---
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfs0KY_cfh3nVnserTXKda8VmRgDwqnaQRGYa49ByYelxWC9mVClT5SzJK5QVmp8k/exec";
-const FILE_ID = "1Sr2R_Smf-y10kC-3DGDT_OePl_JOI1OD"; // ← JSONファイルのID
-
-// 保存（seatMapとplayerDataをDriveへ）
-function saveDataToDrive() {
-  const data = { seatMap, playerData };
-
-  fetch(`${SCRIPT_URL}?fileId=${FILE_ID}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  })
-    .then(res => res.text())
-    .then(msg => {
-      displayMessage(msg.includes("saved") ? "✅ Driveに保存成功" : "❌ 保存失敗: " + msg);
-    })
-    .catch(err => {
-      displayMessage("❌ 保存エラー: " + err.message);
-    });
-}
-
-// 復元（DriveからseatMapとplayerDataを読み込む）
-async function loadDataFromDrive() {
-  try {
-    const res = await fetch(`${SCRIPT_URL}?fileId=${FILE_ID}`);
-    const json = await res.json();
-    seatMap = json.seatMap || {};
-    playerData = json.playerData || {};
-    displayMessage("☁ 復元成功！");
-  } catch (err) {
-    displayMessage("❌ 復元エラー: " + err.message);
-  }
 }
