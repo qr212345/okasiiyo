@@ -60,13 +60,6 @@ body {
   margin-top: 0;
 }
 
-.player-entry {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px solid #eee;
-}
-
 .player-entry:last-child {
   border-bottom: none;
 }
