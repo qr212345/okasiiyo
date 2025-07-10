@@ -396,50 +396,59 @@ function saveToCSV() {
 }
 
 // --- Google Drive へ保存（Apps Script WebApp URLへPOST）---
-function saveToGoogleDrive() {
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxiyKklyyPG7wsTVfWKJmoDapG7lOco8PUyjWlMuqWxHiiipDKGpKQ1g5RpRB09pIQ/exec";
+const FILE_ID = "1Sr2R_Smf-y10kC-3DGDT_OePl_JOI1OD"; // ← JSONファイルのID
+
+// --- 保存（seatMap + playerData） ---
+function saveDataToDrive() {
   const data = {
     seatMap,
     playerData
   };
 
-  fetch("https://script.google.com/macros/s/AKfycbxKFt3FYF3LupFkdI9ib13kE5XKieSP3UGlLw5baD025H2P5QB2QECbf1XL4Mgjw6kZ/exec", {
+  fetch(`${SCRIPT_URL}?fileId=${FILE_ID}`, {
     method: "POST",
-    body: JSON.stringify(data),
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
   })
-    .then(res => res.json())
-    .then(result => {
-      if (result.status === "success") {
-        displayMessage("☁ Drive保存成功");
+    .then(res => res.text())
+    .then(msg => {
+      if (msg.includes("saved")) {
+        displayMessage("✅ Google Driveに保存しました！");
+        localStorage.setItem("seatMap", JSON.stringify(seatMap));
+        localStorage.setItem("playerData", JSON.stringify(playerData));
       } else {
-        displayMessage("❌ 保存エラー: " + result.message);
-        console.log(result);
+        displayMessage("❌ 保存に失敗しました: " + msg);
       }
     })
     .catch(err => {
-      console.error(err);
-      displayMessage("❌ Drive保存失敗");
+      console.error("保存エラー:", err);
+      displayMessage("❌ 保存エラーが発生しました");
     });
 }
 
-function loadFromGoogleDrive() {
-  fetch("https://script.google.com/macros/s/AKfycbxKFt3FYF3LupFkdI9ib13kE5XKieSP3UGlLw5baD025H2P5QB2QECbf1XL4Mgjw6kZ/exec")
-    .then(res => res.json())
-    .then(data => {
-      if (data.seatMap && data.playerData) {
-        seatMap = data.seatMap;
-        playerData = data.playerData;
-        displayMessage("☁ Driveから読み込み成功");
-        saveToLocalStorage();
-        renderSeats();
-      } else {
-        displayMessage("❌ データ形式が不正です");
-        console.log(data);
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      displayMessage("❌ Driveからの読み込み失敗");
-    });
-}
+// --- 復元（seatMap + playerData） ---
+async function loadDataFromDrive() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?fileId=${FILE_ID}`);
+    if (!res.ok) throw new Error("読み込みに失敗しました");
 
+    const json = await res.json();
+    if (!json.seatMap || !json.playerData) throw new Error("JSON構造が不正です");
+
+    seatMap = json.seatMap;
+    playerData = json.playerData;
+
+    localStorage.setItem("seatMap", JSON.stringify(seatMap));
+    localStorage.setItem("playerData", JSON.stringify(playerData));
+
+    currentSeatId = null;
+    updateTable(); // 座席UI更新
+    updatePlayerList(); // プレイヤー表示更新
+    updateCurrentSeatDisplay(); // 座席選択解除など
+    displayMessage("☁ Google Driveから復元しました");
+  } catch (e) {
+    console.error(e);
+    displayMessage("❌ 復元に失敗しました: " + e.message);
+  }
+}
