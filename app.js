@@ -1,6 +1,5 @@
 import { loadJson, saveJson, makeSig }
-from "https://raw.githubusercontent.com/qr212345/okasiiyo/main/qr212345/okasiiyo/raw/tree-save/sdk.mjs
-";// ESM import
+from "https://github.com/qr212345/okasiiyo/tree/main/qr212345/okasiiyo/raw/tree-save";// ESM import
 
 window.addEventListener("DOMContentLoaded", () => {
   const $btnL = document.getElementById("btnLoad");
