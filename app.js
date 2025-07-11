@@ -1,4 +1,4 @@
-import { load, save, makeSig } from './sdk.mjs';   // ESM import
+import { loadJson, saveJson, makeSig } from './sdk.mjs';// ESM import
 // --- グローバル変数 ---
 let currentSeatId = null;
 let seatMap = {}; // 例: { table01: ["player01", "player02", ...] }
