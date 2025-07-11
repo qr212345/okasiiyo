@@ -1,14 +1,14 @@
 const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwckDY2AlG4ItnrqM-7-VkQ6tgPHMTwCZ0JjPW7MfPNWEYgzY3AHTiPn3uNEDQbnD-R/exec';
 const SECRET   = 'kosen-brain-super-secret';                   
 
-export async function loadJson() {
+async function loadJson() {
   const r = await fetch(`${ENDPOINT}?action=get`, { cache:'no-store' });
   const j = await r.json();
   if (j.error) throw j.error;
   return j;                                         
 }
 
-export async function saveJson(nextData, baseRev, sig, retry = 3) {
+async function saveJson(nextData, baseRev, sig, retry = 3) {
   try {
     const body = { data: nextData, rev: baseRev, sig };
     const r = await fetch(ENDPOINT, {
@@ -30,7 +30,7 @@ export async function saveJson(nextData, baseRev, sig, retry = 3) {
 }
 
 /* === 署名関数 (ブラウザ側) === */
-export async function makeSig(data) {
+async function makeSig(data) {
   const enc = new TextEncoder().encode(JSON.stringify(data));
   const key = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(SECRET), { name:'HMAC', hash:'SHA-256' }, false, ['sign']);
