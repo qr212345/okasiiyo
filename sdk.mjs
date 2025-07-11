@@ -14,7 +14,7 @@ export async function saveJson(nextData, baseRev, sig, retry = 3) {
     const body = { data: nextData, rev: baseRev, sig };
     const r = await fetch(ENDPOINT, {
       method : 'POST',
-      headers: { 'Content-Type':'application/json' },
+      headers: { 'Content-Type':'text/plain' },
       body   : JSON.stringify(body)
     });
     const j = await r.json();
