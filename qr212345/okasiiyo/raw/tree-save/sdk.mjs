@@ -1,4 +1,4 @@
-9/* tiny SDK – ESM */
+/* tiny SDK – ESM */
 const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwckDY2AlG4ItnrqM-7-VkQ6tgPHMTwCZ0JjPW7MfPNWEYgzY3AHTiPn3uNEDQbnD-R/exec';
 const SECRET   = 'kosen-brain-super-secret';                   
 
