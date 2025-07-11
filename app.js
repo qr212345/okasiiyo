@@ -40,51 +40,6 @@ export async function makeSig(data) {
 
 /* 小さなユーティリティ */
 const delay = ms => new Promise(res => setTimeout(res, ms));
-window.addEventListener("DOMContentLoaded", () => {
-  const $btnL = document.getElementById("btnLoad");
-  const $btnS = document.getElementById("btnSave");
-  const $status = document.getElementById("status");
-  const $view = document.getElementById("view");
-
-  let db = { rev: 0, data: { msg: "Hello" }, sig: "" };
-
-  function show(msg, ok = true) {
-    $status.textContent = msg;
-    $status.style.color = ok ? "green" : "red";
-  }
-
-  function render() {
-    $view.textContent = JSON.stringify(db, null, 2);
-  }
-
-  async function refresh() {
-    try {
-      db = await load();
-      render();
-      show("✅ 読み取り成功 rev=" + db.rev);
-    } catch (err) {
-      show("❌ 読み取り失敗: " + err, false);
-    }
-  }
-
-  async function store() {
-    try {
-      db.data.msg = prompt("新メッセージを入力", db.data.msg);
-      if (db.data.msg === null) return;
-      db.sig = await makeSig(db.data);
-      db = await save(db.data, db.rev, db.sig);
-      render();
-      show("✅ 保存成功 rev=" + db.rev);
-    } catch (err) {
-      show("❌ 保存失敗: " + err, false);
-    }
-  }
-
-  $btnL.onclick = refresh;
-  $btnS.onclick = store;
-
-  refresh();
-});
 
 // --- グローバル変数 ---
 let currentSeatId = null;
