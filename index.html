@@ -4,11 +4,14 @@
  <meta charset="UTF-8" />
  <meta name="viewport" content="width=device-width, initial-scale=1" />
  <title>ババ抜き大会管理</title>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <!-- ② スタイル -->
   <link rel="stylesheet" href="style.css" />
-  <script type="module" src="app.js"></script>
 </head>
 <body>
+  <!-- デバッグ表示用 -->
+  <pre id="view" style="white-space:pre-wrap;"></pre>
   <div id="app">
   <div id="status" style="margin:8px 0;font-weight:bold;"></div>
     <!-- サイドバー -->
@@ -46,5 +49,6 @@
       </section>
     </main>
   </div>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
