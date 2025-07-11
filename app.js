@@ -1,3 +1,4 @@
+import { load, save, makeSig } from './sdk.mjs';   // ESM import
 // --- グローバル変数 ---
 let currentSeatId = null;
 let seatMap = {}; // 例: { table01: ["player01", "player02", ...] }
@@ -7,6 +8,14 @@ const SCAN_COOLDOWN_MS = 1500;
 let lastScanTime = 0;
 let lastScannedText = "";
 let rankingQrScanner = null;
+// ---ステータス表示 ---
+function showStatus(text, ok = true) {
+  const el = document.getElementById('status');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = ok ? 'green' : 'red';
+}
+
 // --- スキャン処理 ---
 function handleScanSuccess(decodedText, decodedResult) {
   const now = Date.now();
@@ -372,10 +381,7 @@ function saveToCSV() {
   a.download = "player_ranking.csv";
   a.click();
 }
-import { load, save, makeSig } from './sdk.mjs';   // ESM import
-
 /* --- グローバル変数・既存ロジックはそのまま --- */
-
 /* --- store / refresh --- */
 async function refresh() {
   try {
