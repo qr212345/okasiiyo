@@ -1,6 +1,45 @@
-import { loadJson, saveJson, makeSig }
-from "https://raw.githubusercontent.com/qr212345/okasiiyo/refs/heads/main/qr212345/okasiiyo/raw/tree-save/sdk.mjs";// ESM import
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwckDY2AlG4ItnrqM-7-VkQ6tgPHMTwCZ0JjPW7MfPNWEYgzY3AHTiPn3uNEDQbnD-R/exec';
+const SECRET   = 'kosen-brain-super-secret';                   
 
+export async function loadJson() {
+  const r = await fetch(`${ENDPOINT}?action=get`, { cache:'no-store' });
+  const j = await r.json();
+  if (j.error) throw j.error;
+  return j;                                         
+}
+
+export async function saveJson(nextData, baseRev, sig, retry = 3) {
+  try {
+    const body = { data: nextData, rev: baseRev, sig };
+    const r = await fetch(ENDPOINT, {
+      method : 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body   : JSON.stringify(body)
+    });
+    const j = await r.json();
+    if (j.error) throw j.error;
+    return j;                                       // 新しい rev
+  } catch (e) {
+    if (e === 'conflict' && retry) {                // 衝突 → リロード後に再送
+      await delay(200 * (4 - retry));               // 指数バックオフ
+      const latest = await loadJson();
+      return saveJson(nextData, latest.rev, latest.sig, retry - 1);
+    }
+    throw e;
+  }
+}
+
+/* === 署名関数 (ブラウザ側) === */
+export async function makeSig(data) {
+  const enc = new TextEncoder().encode(JSON.stringify(data));
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(SECRET), { name:'HMAC', hash:'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc);
+  return btoa(String.fromCharCode(...new Uint8Array(sig)));
+}
+
+/* 小さなユーティリティ */
+const delay = ms => new Promise(res => setTimeout(res, ms));
 window.addEventListener("DOMContentLoaded", () => {
   const $btnL = document.getElementById("btnLoad");
   const $btnS = document.getElementById("btnSave");
@@ -46,6 +85,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   refresh();
 });
+
 // --- グローバル変数 ---
 let currentSeatId = null;
 let seatMap = {}; // 例: { table01: ["player01", "player02", ...] }
