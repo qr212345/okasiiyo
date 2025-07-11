@@ -436,3 +436,9 @@ window.displayMessage = function(msg) {
   area.textContent = msg;
   setTimeout(() => (area.textContent = ''), 3000);
 };
+window.navigate = navigate;
+window.navigateToExternal = navigateToExternal;
+window.undoAction = undoAction;
+window.saveToCSV = saveToCSV;
+window.confirmRanking = confirmRanking;
+window.removePlayer = removePlayer;
