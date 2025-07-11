@@ -388,55 +388,41 @@ function saveToCSV() {
   a.download = "player_ranking.csv";
   a.click();
 }
+import { load, save, makeSig } from './sdk.mjs';   // 先頭で alias 付き import
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzq2q1RthfqMk1PjXMuY7_qh9Ngx6CX7BbU7GSm8C4J3Z7ZTCmJH1addWOwvTt59HA/exec';
-
-window.loadData = async function() {
+// store / refresh は SDK を呼ぶ実装（例）
+async function refresh() {
   try {
-    const res = await fetch(SCRIPT_URL + '?action=get');
-    const json = await res.json();
-    if (json.error) throw new Error(json.error);
-
-    seatMap = json.seatMap || {};
-    playerData = json.playerData || {};
-    displayMessage('☁ データ読み込み成功');
+    const result = await load();
+    seatMap    = result.data.seatMap || {};
+    playerData = result.data.playerData || {};
     renderSeats();
+    displayMessage('☁ データ読み込み成功');
   } catch (e) {
-    displayMessage('❌ 読み込み失敗: ' + e.message);
+    displayMessage('❌ 読み込み失敗: ' + e);
   }
-};
+}
 
-window.saveData = async function() {
+async function store() {
   try {
-    const data = { seatMap, playerData };
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    const json = await res.json();
-    if (json.error) throw new Error(json.error);
-    if (json.result === 'saved') {
-      displayMessage('✅ データ保存成功');
-    } else {
-      displayMessage('❌ 保存失敗');
-    }
+    const next = { seatMap, playerData };
+    const sig  = await makeSig(next);
+    await save(next, 0 /* ← 最新 rev は save() 内で自動追従 */, sig);
+    displayMessage('✅ データ保存成功');
   } catch (e) {
-    displayMessage('❌ 保存失敗: ' + e.message);
+    displayMessage('❌ 保存失敗: ' + e);
   }
-};
+}
+
+/* ボタンへ紐付け直し */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnSave').addEventListener('click', store);
+  document.getElementById('btnLoad').addEventListener('click', refresh);
+});
 
 window.displayMessage = function(msg) {
   const area = document.getElementById('messageArea');
   area.textContent = msg;
   setTimeout(() => (area.textContent = ''), 3000);
 };
-document.addEventListener('DOMContentLoaded', () => {
-  // ボタン要素を取得
-  const btnSave = document.getElementById('btnSave');
-  const btnLoad = document.getElementById('btnLoad');
 
-  // 既存の関数を紐付け
-  btnSave.addEventListener('click', saveData);
-  btnLoad.addEventListener('click', loadData);
-});
