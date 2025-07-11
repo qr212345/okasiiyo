@@ -1,5 +1,5 @@
 /* tiny SDK – ESM */
-const ENDPOINT = 'https://script.google.com/macros/s/AKfycbz-KifWR_6WpOdwxbpOrMQKJeNCo8QfTktYM58IqTED2ilh6yO52VvE2iXYaR0qboWZ/exec';
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbySlkjBYNpG8NAbOBXPMO4BbQGwA7RjRdR-i5fv-SffnV1ngpiLVkSYSOizx7z_YDiE/exec';
 const SECRET   = 'kosen-brain-super-secret';                       // 同じ鍵
 
 export async function loadJson() {
