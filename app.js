@@ -473,11 +473,12 @@ function bindButtons() {
   document.getElementById('btnLoad').addEventListener('click', refresh);
 }
 
-window.displayMessage = function(msg) {
+function displayMessage(msg) {
   const area = document.getElementById('messageArea');
   area.textContent = msg;
   setTimeout(() => (area.textContent = ''), 3000);
-};
+}
+
 window.navigate = navigate;
 window.navigateToExternal = navigateToExternal;
 window.undoAction = undoAction;
