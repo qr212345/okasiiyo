@@ -1,12 +1,12 @@
 /* tiny SDK – ESM */
 const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwckDY2AlG4ItnrqM-7-VkQ6tgPHMTwCZ0JjPW7MfPNWEYgzY3AHTiPn3uNEDQbnD-R/exec';
-const SECRET   = 'kosen-brain-super-secret';                       // 同じ鍵
+const SECRET   = 'kosen-brain-super-secret';                   
 
 export async function loadJson() {
   const r = await fetch(`${ENDPOINT}?action=get`, { cache:'no-store' });
   const j = await r.json();
   if (j.error) throw j.error;
-  return j;                                         // {rev,data,sig}
+  return j;                                         
 }
 
 export async function saveJson(nextData, baseRev, sig, retry = 3) {
