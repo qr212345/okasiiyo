@@ -7,22 +7,6 @@ const SCAN_COOLDOWN_MS = 1500;
 let lastScanTime = 0;
 let lastScannedText = "";
 let rankingQrScanner = null;
-// --- html5-qrcode 読み取り初期化 ---
-window.onload = () => {
-  const qrReader = new Html5Qrcode("reader");
-  qrReader.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    handleScanSuccess
-  ).catch(err => {
-    displayMessage("カメラの起動に失敗しました。");
-    console.error(err);
-  });
-
-  loadFromLocalStorage();
-  renderSeats();
-};
-
 // --- スキャン処理 ---
 function handleScanSuccess(decodedText, decodedResult) {
   const now = Date.now();
@@ -388,14 +372,16 @@ function saveToCSV() {
   a.download = "player_ranking.csv";
   a.click();
 }
-import { load, save, makeSig } from './sdk.mjs';   // 先頭で alias 付き import
+import { load, save, makeSig } from './sdk.mjs';   // ESM import
 
-// store / refresh は SDK を呼ぶ実装（例）
+/* --- グローバル変数・既存ロジックはそのまま --- */
+
+/* --- store / refresh --- */
 async function refresh() {
   try {
-    const result = await load();
-    seatMap    = result.data.seatMap || {};
-    playerData = result.data.playerData || {};
+    const { data } = await load();
+    seatMap    = data.seatMap  || {};
+    playerData = data.playerData || {};
     renderSeats();
     displayMessage('☁ データ読み込み成功');
   } catch (e) {
@@ -407,22 +393,40 @@ async function store() {
   try {
     const next = { seatMap, playerData };
     const sig  = await makeSig(next);
-    await save(next, 0 /* ← 最新 rev は save() 内で自動追従 */, sig);
+    await save(next, 0, sig);        // rev は save 内で自動更新
     displayMessage('✅ データ保存成功');
   } catch (e) {
     displayMessage('❌ 保存失敗: ' + e);
   }
 }
 
-/* ボタンへ紐付け直し */
+/* --- 画面ロード時の初期化を 1 箇所に --- */
 document.addEventListener('DOMContentLoaded', () => {
+  initCamera();           // ① カメラ起動
+  loadFromLocalStorage(); // ② ローカル復元
+  renderSeats();          // ③ 画面に描画
+  bindButtons();          // ④ ボタンの click ハンドラ登録
+});
+
+function initCamera() {
+  const qrReader = new Html5Qrcode('reader');
+  qrReader.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: 250 },
+    handleScanSuccess
+  ).catch(err => {
+    displayMessage('カメラの起動に失敗しました');
+    console.error(err);
+  });
+}
+
+function bindButtons() {
   document.getElementById('btnSave').addEventListener('click', store);
   document.getElementById('btnLoad').addEventListener('click', refresh);
-});
+}
 
 window.displayMessage = function(msg) {
   const area = document.getElementById('messageArea');
   area.textContent = msg;
   setTimeout(() => (area.textContent = ''), 3000);
 };
-
