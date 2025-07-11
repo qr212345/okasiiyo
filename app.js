@@ -1,4 +1,4 @@
-import { loadJson, saveJson, makeSig } 
+import { loadJson, saveJson, makeSig }
 from "https://raw.githubusercontent.com/qr212345/okasiiyo/main/sdk.mjs";// ESM import
 // --- グローバル変数 ---
 let currentSeatId = null;
