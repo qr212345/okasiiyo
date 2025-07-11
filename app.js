@@ -385,7 +385,7 @@ function saveToCSV() {
 /* --- store / refresh --- */
 async function refresh() {
   try {
-    const { data } = await load();
+    const { data } = await loadJson();
     seatMap    = data.seatMap  || {};
     playerData = data.playerData || {};
     renderSeats();
@@ -399,7 +399,7 @@ async function store() {
   try {
     const next = { seatMap, playerData };
     const sig  = await makeSig(next);
-    await save(next, 0, sig);        // rev は save 内で自動更新
+    await saveJson(next, 0, sig);        // rev は save 内で自動更新
     displayMessage('✅ データ保存成功');
   } catch (e) {
     displayMessage('❌ 保存失敗: ' + e);
