@@ -4,7 +4,7 @@
 let qrReader;
 /* ======== 定数 ======== */
 const ENDPOINT = "https://script.google.com/macros/s/AKfycbziNo8veiGJQSLGh1asEzykmWDjzaMbXXxRDpbNYz4CQ2J_0j-JxaeeJyYfxkfsHgk/exec";
-const FILE_ID = '1YGb-2yW2JTFtB4MqWnbkb9Ut_kNLsv2R';
+const FILE_ID = '1E323vbY5eANtdAkt6-lwMhX3wrKrP_5m';
 const SECRET   = "kosen-brain-super-secret";
 const SCAN_COOLDOWN_MS = 1500;
 const POLL_INTERVAL_MS = 20_000;
