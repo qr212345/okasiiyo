@@ -1,18 +1,22 @@
 /* ------------------------------------------------------
- *  Babanki Manager  – Supabase + Google Drive Backup
+ *  Babanki Manager – Supabase + Google Drive Backup
  * ---------------------------------------------------- */
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-/* === #1 Supabase 初期化 ================================== */
+/* === #1 Supabase ====================================== */
 const SUPABASE_URL = "https://esddtjbpcisqhfdapgpx.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzZGR0amJwY2lzcWhmZGFwZ3B4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MTU1NDEsImV4cCI6MjA2Nzk5MTU0MX0.zrkh64xMd82DmPI7Zffcj4-H328JxBstpbS43pTujaI"
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_KEY = "pk_……";              // ★サービスロールではなく anon で OK
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  /* ★ 406 回避用: fetch で Accept を送らせない */
+  global: { headers: { Accept: "application/json" } }
+});
 
-/* 固定 UUID ― game_data の id=uuid 型に合わせる */
+/* 固定 UUID 1 行保存 */
 const FIXED_ID = "00000000-0000-0000-0000-000000000001";
 
-/* Google Apps Script（Drive）エンドポイント */
-const GAS_ENDPOINT = "https://script.google.com/macros/s/xxxxxxxxxxxxxxxx/exec";
+/* Google Apps Script WebApp URL（デプロイ URL を貼る） */
+const GAS_ENDPOINT =
+  "https://script.google.com/macros/s/AKfycb……/exec";        // ★実 URL
 
 /* === アプリ定数 ========================================== */
 const SCAN_COOLDOWN_MS = 1500;
@@ -212,46 +216,46 @@ window.confirmRanking = () => {
   initCamera();
 };
 /* =================================================================
-   ★ #9, #10 保存と読込 ― Supabase と Drive の両方で整合を取る
+   #9, #10 保存と読込部分だけ修正
 ==================================================================*/
-async function saveGame(){
-  /* -- Supabase側 ------------------------------------------------ */
-  const payload={
-    id:FIXED_ID,
-    seat_map    : seatMap,      // カラム名と合わせる
-    player_data : playerData
+async function saveGame() {
+  /* Supabase */
+  const payload = {
+    id: FIXED_ID,
+    seat_map: seatMap,
+    player_data: playerData
   };
-  const { error } = await supabase.from("game_data")
-    .upsert([payload],{onConflict:"id"});
-  if(error) throw error;
+  const { error } = await supabase
+    .from("game_data")
+    .upsert(payload, { onConflict: "id", ignoreDuplicates: false });
+  if (error) throw error;
 
-  /* -- Google Drive側（バックアップ） ---------------------------- */
-  await fetch(GAS_ENDPOINT,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ seatMap, playerData })
+  /* Drive backup */
+  await fetch(GAS_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ seatMap, playerData })
   });
 }
 
-async function loadGame(){
-  /* ① Supabase から試行 */
+async function loadGame() {
+  /* ① Supabase */
   const { data, error } = await supabase
-      .from("game_data")
-      .select('*')
-      .eq('id',FIXED_ID)
-      .single();
-
-  if(!error && data){
-    seatMap    = data.seat_map   ?? {};
-    playerData = data.player_data   ?? {};
+    .from("game_data")
+    .select()               // ★ '*' ではなく空 select() で 406 回避
+    .eq("id", FIXED_ID)
+    .maybeSingle();         // ★ not single() → null 可
+  if (!error && data) {
+    seatMap = data.seat_map ?? {};
+    playerData = data.player_data ?? {};
     return;
   }
 
-  /* ② Supabase失敗 → Drive から */
-  const r = await fetch(GAS_ENDPOINT,{cache:"no-store"});
-  if(r.ok){
+  /* ② Drive (fallback) */
+  const r = await fetch(GAS_ENDPOINT, { cache: "no-store" });
+  if (r.ok) {
     const d = await r.json();
-    seatMap    = d.seatMap    ?? {};
+    seatMap = d.seatMap ?? {};
     playerData = d.playerData ?? {};
   }
 }
