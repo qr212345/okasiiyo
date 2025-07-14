@@ -3,6 +3,9 @@
  **********************/
 let qrReader;
 /* ======== 定数 ======== */
+const supabaseUrl = 'https://esddtjbpcisqhfdapgpx.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzZGR0amJwY2lzcWhmZGFwZ3B4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MTU1NDEsImV4cCI6MjA2Nzk5MTU0MX0.zrkh64xMd82DmPI7Zffcj4-H328JxBstpbS43pTujaI';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 const ENDPOINT = "https://script.google.com/macros/s/AKfycbwH5j5sdwNz6NuGDc-PlA-4KsaY1Tlf8F9aVLcbf0GBK4V6QujpusGG_3M9KZMT_cM/exec";
 const FILE_ID = '1YGb-2yW2JTFtB4MqWnbkb9Ut_kNLsv2R';
 const SECRET   = "kosen-brain-super-secret";
