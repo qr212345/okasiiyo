@@ -207,26 +207,37 @@ window.confirmRanking = () => {
 
 /* === #9, #10 保存と読込（Google Apps Script 経由） ======= */
 async function saveGame() {
-  await fetch(GAS_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ seatMap, playerData })
-  }).catch(e => message("❌ Drive保存失敗:" + e.message));
+  try {
+    const res = await fetch(GAS_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seatMap, playerData }),
+      mode: "cors",
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    message("☁ 保存完了");
+  } catch (e) {
+    message("❌ Drive保存失敗:" + e.message);
+  }
 }
 
 async function loadGame() {
   try {
-    const r = await fetch(GAS_ENDPOINT, { cache: "no-store" });
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const d = await r.json();
-    seatMap = d.seatMap ?? {};
-    playerData = d.playerData ?? {};
+    const res = await fetch(GAS_ENDPOINT + "?t=" + Date.now(), { method: "GET", mode: "cors" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    seatMap = data.seatMap ?? {};
+    playerData = data.playerData ?? {};
+    message("☁ 読込完了");
   } catch (e) {
     message("❌ Drive読込失敗:" + e.message);
     seatMap = {};
     playerData = {};
   }
 }
+
 
 /* === #11  CSV 出力 ======================================== */
 window.saveFullCSV = () => {
