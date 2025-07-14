@@ -3,7 +3,7 @@
  **********************/
 
 /* ======== 定数 ======== */
-const ENDPOINT = 'https://script.google.com/macros/s/AKfycbz_dt3hW-AaSkvecE5Ts4jx0tgSxjysT7eO8ZOhoKOScPZqAjGqZki0oNtiLOudee4/exec';
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzBATTCfgbPZlFLhrpBNqvSsZ1wDIhppsuhWwSY-jL_z0thkPMGfzX8av3uBusTNU75/exec';
 const SECRET   = 'kosen-brain-super-secret';
 const SCAN_COOLDOWN_MS = 1500;
 const POLL_INTERVAL_MS = 20_000;
