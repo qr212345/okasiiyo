@@ -337,11 +337,14 @@ function displayMessage(msg) {
   if (el) el.textContent = msg;
 }
 
-// JSONデータをサーバーから取得
 async function loadJson() {
   try {
     const url = `${ENDPOINT}`;
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, {
+      method: "GET",
+      mode: "cors", // ← 追加
+      cache: "no-store"
+    });
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const json = await res.json();
     if (json.error) throw new Error(json.error);
@@ -353,16 +356,13 @@ async function loadJson() {
   }
 }
 
-// JSONデータをサーバーへ保存
 async function saveJson(data, rev = 0) {
   try {
-    const body = {
-      data: data,
-      rev: rev
-    };
+    const body = { data, rev };
     const url = `${ENDPOINT}`;
     const res = await fetch(url, {
       method: 'POST',
+      mode: 'cors', // ← 追加
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
