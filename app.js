@@ -122,7 +122,7 @@ function onRankingScan(text){
     rankingList.appendChild(li);
   });
   makeListDraggable(rankingList);
-  message(✅ ${text} の順位登録モード);
+  message(`✅ ${text} の順位登録モード`);
 }
 
 /* カメラ起動（順位登録用） */
