@@ -1,22 +1,13 @@
 /* ------------------------------------------------------
- *  Babanki Manager – Supabase + Google Drive Backup
+ *  Babanki Manager – Google Drive + GAS Backup Only
  * ---------------------------------------------------- */
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-/* === #1 Supabase ====================================== */
-const SUPABASE_URL = "https://esddtjbpcisqhfdapgpx.supabase.co";
-const SUPABASE_KEY = "pk_……";              // ★サービスロールではなく anon で OK
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  /* ★ 406 回避用: fetch で Accept を送らせない */
-  global: { headers: { Accept: "application/json" } }
-});
 
 /* 固定 UUID 1 行保存 */
 const FIXED_ID = "00000000-0000-0000-0000-000000000001";
 
 /* Google Apps Script WebApp URL（デプロイ URL を貼る） */
 const GAS_ENDPOINT =
-  "https://script.google.com/macros/s/AKfycb……/exec";        // ★実 URL
+  "https://script.google.com/macros/s/AKfycbxQK_MleZIHWT4SDJ4_-DB_CQ7OjLbSXT_baOomJLWMF6Tq0tb/exec";  // ★実 URL
 
 /* === アプリ定数 ========================================== */
 const SCAN_COOLDOWN_MS = 1500;
@@ -34,7 +25,7 @@ let currentSeatId = null;
 
 /* ====== ユーティリティ =================================== */
 const $ = id => document.getElementById(id);
-const message = txt => { const m=$("messageArea"); if(m){m.textContent=txt; setTimeout(()=>m.textContent="",3e3);} };
+const message = txt => { const m=$("messageArea"); if(m){m.textContent=txt; setTimeout(()=>m.textContent="",3000);} };
 
 /* === #3  QRスキャン（登録用） ============================= */
 function onScan(text){
@@ -58,7 +49,7 @@ function onScan(text){
 }
 
 /* === #4  カメラ起動 ======================================= */
-export function initCamera(){
+function initCamera(){
   if(qrActiveScan) return;
   qrReaderScan ??= new Html5Qrcode("reader");
   qrReaderScan.start({facingMode:"environment"},{fps:10,qrbox:250},onScan)
@@ -106,7 +97,6 @@ window.undoAction = ()=>{
 };
 
 /* === #7  順位登録カメラ & UI ============================== */
-// 省略: 現状動いているコードをそのまま使用 (onRankingScan / makeListDraggable など)
 function onRankingScan(text) {
   if (!text.startsWith("table")) {
     message("順位登録は座席コードのみ読み込み");
@@ -128,8 +118,6 @@ function onRankingScan(text) {
   });
 
   makeListDraggable(rankingList);
-
-  // ←ここが修正済み行
   message(`✅ ${text} の順位登録モード`);
 }
 
@@ -159,7 +147,8 @@ function makeListDraggable(ul){
     };
   });
 }
-/* === #8  レート計算 (同上) ================================ */
+
+/* === #8  レート計算 ====================================== */
 function getTopRatedPlayerId(){
   let maxRate = -Infinity, maxId = null;
   for(const [id, p] of Object.entries(playerData)){
@@ -201,12 +190,12 @@ window.confirmRanking = () => {
   const order = [...document.querySelectorAll("#rankingList li")].map(li => li.textContent);
   calculateRate(order);
   renderSeats();
-  saveGame();  // Supabase 保存
+  saveGame();  // GAS 保存
   message("✅ 順位確定しました");
   // 順位登録UI非表示
-  document.getElementById("rankingSection").style.display = "none";
+  $("rankingSection").style.display = "none";
   // スキャン画面表示
-  document.getElementById("scanSection").style.display = "block";
+  $("scanSection").style.display = "block";
   // 順位登録カメラ停止
   if(qrReaderRanking && qrActiveRanking) {
     qrReaderRanking.stop();
@@ -215,52 +204,31 @@ window.confirmRanking = () => {
   // スキャンカメラ起動
   initCamera();
 };
-/* =================================================================
-   #9, #10 保存と読込部分だけ修正
-==================================================================*/
-async function saveGame() {
-  /* Supabase */
-  const payload = {
-    id: FIXED_ID,
-    seat_map: seatMap,
-    player_data: playerData
-  };
-  const { error } = await supabase
-    .from("game_data")
-    .upsert(payload, { onConflict: "id", ignoreDuplicates: false });
-  if (error) throw error;
 
-  /* Drive backup */
+/* === #9, #10 保存と読込（Google Apps Script 経由） ======= */
+async function saveGame() {
   await fetch(GAS_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ seatMap, playerData })
-  });
+  }).catch(e => message("❌ Drive保存失敗:" + e.message));
 }
 
 async function loadGame() {
-  /* ① Supabase */
-  const { data, error } = await supabase
-    .from("game_data")
-    .select()               // ★ '*' ではなく空 select() で 406 回避
-    .eq("id", FIXED_ID)
-    .maybeSingle();         // ★ not single() → null 可
-  if (!error && data) {
-    seatMap = data.seat_map ?? {};
-    playerData = data.player_data ?? {};
-    return;
-  }
-
-  /* ② Drive (fallback) */
-  const r = await fetch(GAS_ENDPOINT, { cache: "no-store" });
-  if (r.ok) {
+  try {
+    const r = await fetch(GAS_ENDPOINT, { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
     const d = await r.json();
     seatMap = d.seatMap ?? {};
     playerData = d.playerData ?? {};
+  } catch (e) {
+    message("❌ Drive読込失敗:" + e.message);
+    seatMap = {};
+    playerData = {};
   }
 }
 
-/* === #11  CSV 出力 (同じ) ================================= */
+/* === #11  CSV 出力 ======================================== */
 window.saveFullCSV = () => {
   const rows = [["ID","Nickname","Rate","PrevRank","Bonus","Title"]];
   for(const id in playerData){
@@ -273,23 +241,39 @@ window.saveFullCSV = () => {
   a.download = "babanuki_players.csv";
   a.click();
 };
-/* === #12  ボタン紐付け ==================================== */
+
+/* === #12  ボタン紐付け =================================== */
 function bindButtons(){
-  $("btnSave")?.addEventListener("click",async()=>{try{await saveGame();message("☁ 保存完了");}catch(e){message(e.message);}});
-  $("btnLoad")?.addEventListener("click",async()=>{try{await loadGame();renderSeats();message("☁ 読込完了");}catch(e){message("読込失敗");}});
+  $("btnSave")?.addEventListener("click", async () => {
+    await saveGame();
+    message("☁ 保存完了");
+  });
+  $("btnLoad")?.addEventListener("click", async () => {
+    await loadGame();
+    renderSeats();
+    message("☁ 読込完了");
+  });
 }
 
 /* === #13  初期ロード ===================================== */
-window.addEventListener("DOMContentLoaded",async()=>{
+window.addEventListener("DOMContentLoaded", async () => {
   await loadGame();
-  renderSeats(); bindButtons(); initCamera();
+  renderSeats();
+  bindButtons();
+  initCamera();
 });
 
 /* === 画面切替・外部遷移 ================================== */
-window.navigate = mode=>{
-  $("scanSection").style.display = mode==="scan"?"block":"none";
-  $("rankingSection").style.display = mode==="ranking"?"block":"none";
-  if(mode==="scan"){ if(qrActiveRanking){qrReaderRanking.stop();qrActiveRanking=false;} initCamera(); }
-  if(mode==="ranking"){ if(qrActiveScan){qrReaderScan.stop();qrActiveScan=false;} initRankingCamera(); }
+window.navigate = mode => {
+  $("scanSection").style.display = mode === "scan" ? "block" : "none";
+  $("rankingSection").style.display = mode === "ranking" ? "block" : "none";
+  if (mode === "scan") {
+    if (qrActiveRanking) { qrReaderRanking.stop(); qrActiveRanking = false; }
+    initCamera();
+  }
+  if (mode === "ranking") {
+    if (qrActiveScan) { qrReaderScan.stop(); qrActiveScan = false; }
+    initRankingCamera();
+  }
 };
-window.navigateToExternal = url => window.open(url,"_blank");
+window.navigateToExternal = url => window.open(url, "_blank");
