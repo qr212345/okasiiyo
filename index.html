@@ -32,7 +32,7 @@
         <div id="messageArea"></div>
         <div id="seatList"></div>
         <button onclick="undoAction()">↩ Undo</button>
-        <button onclick="saveToCSV()">📄 CSVで保存</button>
+        <button onclick="saveFullCSV()">📄 CSVで保存</button>
         <button id="btnSave">☁ Driveに保存</button>
         <button id="btnLoad">☁ Driveから読み込み</button>
         </section>
@@ -48,6 +48,7 @@
     </main>
   </div>
   <script src="https://unpkg.com/html5-qrcode@2.3.7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="module" src="./app.js"></script>
 </body>
 </html>
