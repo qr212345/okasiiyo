@@ -103,17 +103,18 @@ window.undoAction = ()=>{
 
 /* === #7  順位登録カメラ & UI ============================== */
 // 省略: 現状動いているコードをそのまま使用 (onRankingScan / makeListDraggable など)
-function onRankingScan(text){
-  if(!text.startsWith("table")){
+function onRankingScan(text) {
+  if (!text.startsWith("table")) {
     message("順位登録は座席コードのみ読み込み");
     return;
   }
-  if(!seatMap[text]){
+  if (!seatMap[text]) {
     message("未登録の座席です");
     return;
   }
+
   currentSeatId = text;
-  // 順位登録リスト初期化
+
   const rankingList = document.getElementById("rankingList");
   rankingList.innerHTML = "";
   seatMap[text].forEach(pid => {
@@ -121,7 +122,10 @@ function onRankingScan(text){
     li.textContent = pid;
     rankingList.appendChild(li);
   });
+
   makeListDraggable(rankingList);
+
+  // ←ここが修正済み行
   message(`✅ ${text} の順位登録モード`);
 }
 
