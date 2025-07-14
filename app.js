@@ -218,8 +218,8 @@ async function saveGame(){
   /* -- Supabase側 ------------------------------------------------ */
   const payload={
     id:FIXED_ID,
-    "seat-map":seatMap,      // カラム名と合わせる
-    player_data:playerData
+    seat_map    : seatMap,      // カラム名と合わせる
+    player_data : playerData
   };
   const { error } = await supabase.from("game_data")
     .upsert([payload],{onConflict:"id"});
@@ -242,7 +242,7 @@ async function loadGame(){
       .single();
 
   if(!error && data){
-    seatMap    = data["seat-map"]   ?? {};
+    seatMap    = data.seat_map   ?? {};
     playerData = data.player_data   ?? {};
     return;
   }
