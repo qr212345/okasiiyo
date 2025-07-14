@@ -7,7 +7,7 @@ const FIXED_ID = "00000000-0000-0000-0000-000000000001";
 
 /* Google Apps Script WebApp URL（デプロイ URL を貼る） */
 const GAS_ENDPOINT =
-  "https://script.google.com/macros/s/AKfycbzDw-9ydhMMd4ANVwJc5eNuc5Z0v2m3UW0gAkW0ZfutT-vcg0oxgMQJKnK6vPZ8h3M/exec";  // ★実 URL
+  "https://script.google.com/macros/s/AKfycbw_BfOm-ZHnzuneP0ahgVuEtBrbT-xbKCRhqnusA-r_7VHa9KPHQKVuNDzewhJeW9k/exec";  // ★実 URL
 
 /* === アプリ定数 ========================================== */
 const SCAN_COOLDOWN_MS = 1500;
