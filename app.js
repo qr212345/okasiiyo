@@ -431,6 +431,16 @@ async function store() {
   }
 }
 
+async function refresh(){
+  const loaded = await loadJson();
+  if(loaded && loaded.data){
+    seatMap    = loaded.data.seatMap    || {};
+    playerData = loaded.data.playerData || {};
+    renderSeats();
+    displayMessage('☁ 最新データを読み込みました');
+  }
+}
+
 // 例: ページ読み込み時にデータを読み込み表示
 window.addEventListener('DOMContentLoaded', async () => {
   const loaded = await loadJson();
