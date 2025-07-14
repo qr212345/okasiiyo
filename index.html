@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
- <meta charset="UTF-8" />
- <meta name="viewport" content="width=device-width, initial-scale=1" />
- <title>ババ抜き大会管理</title>
- <!-- ② スタイル -->
- <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ババ抜き大会管理</title>
+
+  <!-- スタイル -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- デバッグ表示用 -->
   <pre id="view" style="white-space:pre-wrap;"></pre>
+
   <div id="app">
     <div id="status" style="margin:8px 0;font-weight:bold;"></div>
+
     <!-- サイドバー -->
     <nav id="sidebar">
       <h2>メニュー</h2>
@@ -28,22 +31,24 @@
       <!-- スキャンUI -->
       <section id="scanSection" class="section">
         <h2>QRコードスキャン</h2>
-        <div id="reader" style="width: 320px"></div>
+        <div id="reader" style="width:320px"></div>
         <div id="messageArea"></div>
         <div id="seatList"></div>
-        <button onclick="undoAction()">↩ Undo</button>
-        <button onclick="saveFullCSV()">📄 CSVで保存</button>
-        <button id="btnSave">☁ Driveに保存</button>
-        <button id="btnLoad">☁ Driveから読み込み</button>
+
+        <!-- ボタン郡：ID を JS に完全準拠 -->
+        <button id="btnUndo">↩ Undo</button>
+        <button id="btnSaveCSV">📄 CSVで保存</button>
+        <button id="btnStore">☁ Driveに保存</button>
+        <button id="btnRefresh">📥 Driveから読み込み</button>
       </section>
 
       <!-- 順位登録UI -->
       <section id="rankingSection" class="section" style="display:none">
         <h2>順位登録モード</h2>
         <p>QRコードで座席を読み込んでください。</p>
-        <div id="rankingReader" style="width: 320px;"></div>
+        <div id="rankingReader" style="width:320px;"></div>
         <ul id="rankingList" class="draggable-list"></ul>
-        <button onclick="confirmRanking()">✅ 順位決定</button>
+        <button id="btnConfirmRanking">✅ 順位決定</button>
       </section>
     </main>
   </div>
