@@ -233,6 +233,16 @@ async function loadGame(){
   return d;
 }
 
+async function saveGame(){
+  const res = await fetch(GAS_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ seatMap, playerData })
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.message);
+}
+
 /* #11 CSV保存 */
 window.saveFullCSV = () => {
   const rows = [["ID","Nickname","Rate","PrevRank","Bonus","Title"]];
