@@ -2,10 +2,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 /* --- #1 Supabase 初期化 --- */
 const SUPABASE_URL = "https://esddtjbpcisqhfdapgpx.supabase.co";
-const SUPABASE_KEY = "YOUR_ANON_KEY_HERE";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzZGR0amJwY2lzcWhmZGFwZ3B4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MTU1NDEsImV4cCI6MjA2Nzk5MTU0MX0.zrkh64xMd82DmPI7Zffcj4-H328JxBstpbS43pTujaI";
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const GAS_ENDPOINT = "https://script.google.com/macros/s/xxxxxxxxxxxxxxxx/exec";
+const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzjgWQl2kluyxRyGlv2BbE0p4bmQ4STvWGT5JNQ9fQsiBI6xN6h0f7dFpYNTJH5R6I/exec";
 
 const SCAN_COOLDOWN_MS = 1500;
 const POLL_INTERVAL_MS = 20000;
@@ -286,5 +286,30 @@ window.addEventListener("DOMContentLoaded", async () => {
   renderSeats();
   bindButtons();
 });
+
+/*#追加コード */
+window.navigate = (mode) => {
+  if(mode === "scan"){
+    document.getElementById("scanSection").style.display = "block";
+    document.getElementById("rankingSection").style.display = "none";
+    if(qrActiveRanking && qrReaderRanking) {
+      qrReaderRanking.stop();
+      qrActiveRanking = false;
+    }
+    initCamera();
+  } else if(mode === "ranking"){
+    document.getElementById("scanSection").style.display = "none";
+    document.getElementById("rankingSection").style.display = "block";
+    if(qrActiveScan && qrReaderScan) {
+      qrReaderScan.stop();
+      qrActiveScan = false;
+    }
+    initRankingCamera();
+  }
+};
+
+window.navigateToExternal = (url) => {
+  window.open(url, "_blank");
+};
 
 function message(t){ const m=document.getElementById("messageArea"); if(m){m.textContent=t; setTimeout(()=>m.textContent="",3000);} }
