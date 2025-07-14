@@ -4,14 +4,14 @@
  <meta charset="UTF-8" />
  <meta name="viewport" content="width=device-width, initial-scale=1" />
  <title>ババ抜き大会管理</title>
-<!-- ② スタイル -->
+ <!-- ② スタイル -->
  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- デバッグ表示用 -->
   <pre id="view" style="white-space:pre-wrap;"></pre>
   <div id="app">
-  <div id="status" style="margin:8px 0;font-weight:bold;"></div>
+    <div id="status" style="margin:8px 0;font-weight:bold;"></div>
     <!-- サイドバー -->
     <nav id="sidebar">
       <h2>メニュー</h2>
@@ -35,7 +35,7 @@
         <button onclick="saveFullCSV()">📄 CSVで保存</button>
         <button id="btnSave">☁ Driveに保存</button>
         <button id="btnLoad">☁ Driveから読み込み</button>
-        </section>
+      </section>
 
       <!-- 順位登録UI -->
       <section id="rankingSection" class="section" style="display:none">
@@ -47,8 +47,11 @@
       </section>
     </main>
   </div>
+
+  <!-- HTML5 QRコードスキャンライブラリ -->
   <script src="https://unpkg.com/html5-qrcode@2.3.7"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- 自作スクリプト -->
   <script type="module" src="./app.js"></script>
 </body>
 </html>
