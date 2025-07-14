@@ -25,6 +25,7 @@ let lastScannedText = "";
 let msgTimer        = null;
 
 let pollTimer = null;
+let isSaving = false;
 /* ======== ユーティリティ ======== */
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
