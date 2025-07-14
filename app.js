@@ -5,7 +5,7 @@ const SUPABASE_URL = "https://esddtjbpcisqhfdapgpx.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzZGR0amJwY2lzcWhmZGFwZ3B4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MTU1NDEsImV4cCI6MjA2Nzk5MTU0MX0.zrkh64xMd82DmPI7Zffcj4-H328JxBstpbS43pTujaI";
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbwIgHecPWXi9T96Fh8PagCbTVVkG4wlD-2hUG55Q-hfeB_Z8IXQUFvNiqKsq7aO9pY/exec";
+const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbyWE_4JSbgwaRR2pXnkTrZEEa7Z7bdDtd7-66_1udnICQSBfxgJH3bY0LiG6Wl2imY/exec";
 
 const SCAN_COOLDOWN_MS = 1500;
 const POLL_INTERVAL_MS = 20000;
