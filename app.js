@@ -5,7 +5,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 /* === #1 Supabase 初期化 ================================== */
 const SUPABASE_URL = "https://esddtjbpcisqhfdapgpx.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzZGR0amJwY2lzcWhmZGFwZ3B4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MTU1NDEsImV4cCI6MjA2Nzk5MTU0MX0.zrkh64xMd82DmPI7Zffcj4-H328JxBstpbS43pTujaI"
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* 固定 UUID ― game_data の id=uuid 型に合わせる */
