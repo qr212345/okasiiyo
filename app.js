@@ -71,8 +71,6 @@ function handleScanSuccess(decodedText) {
   handleRankingMode(decodedText);
 }
 
-const qr = new Html5Qrcode("reader");
-
 function initCamera() {
   if (!qr) qr = new Html5Qrcode("reader");
   qr.start(
