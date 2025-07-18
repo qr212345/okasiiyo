@@ -1,7 +1,6 @@
 /**********************
  * ババ抜き大会管理 *
  **********************/
-
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwGakzxdshT_VGIerXxrUxMWH8oq2_8Z6RD1_bmT1awA0WjNim45OI3wf2A_n5QyJI/exec'; // ← あなたのGAS公開URLを入れてください
 const POLL_INTERVAL_MS = 20000; // 20秒間隔で他端末変更をチェック
 const SCAN_COOLDOWN_MS = 1500;  // 同じQRを連続読みしない猶予
