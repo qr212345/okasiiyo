@@ -470,21 +470,34 @@ async function sendAllSeatPlayers() {
   }
 }
 
-async function loadData() {
+// 純粋にデータ取得だけ担当
+async function loadJson() {
   try {
-    const res = await fetch(GAS_URL);
-    const data = await res.json();
-    if (data.seatMap) {
-      seatMap = data.seatMap;
-      playerData = data.playerData || {};
-      renderSeats();
-      displayMessage('☁ 最新データを読み込みました');
-    }
-    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
-  } catch (err) {
-    document.getElementById('result').textContent = "読み込みエラー: " + err.message;
+    const response = await fetch(GAS_URL);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error('loadJson error:', error);
+    return null;
   }
 }
+
+// データ取得後の画面更新などはここで担当
+async function loadData() {
+  const data = await loadJson();
+  if (!data) {
+    document.getElementById('result').textContent = "読み込みエラー: データ取得に失敗しました";
+    return;
+  }
+  if (data.seatMap) {
+    seatMap = data.seatMap;
+    playerData = data.playerData || {};
+    renderSeats();
+    displayMessage('☁ 最新データを読み込みました');
+  }
+  document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+}
+
 
 
   window.sendAllSeatPlayers = sendAllSeatPlayers;
