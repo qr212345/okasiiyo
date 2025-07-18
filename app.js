@@ -418,7 +418,61 @@ function saveToCSV() {
   a.download = 'player_ranking.csv';
   a.click();
 }
+ 
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwCnJbf3oGz1U9lvrXR7uF6fHuIZfwP4tb8b_Iu5lw-6OS2mXumIX1aFhaDuh0xyGI/exec'
 
+function sendAllSeatPlayers() {
+  if (Object.keys(seatMap).length === 0) {
+    alert("登録された座席とプレイヤーがありません");
+    return;
+  }
+
+  const payload = { seatMap };
+
+  fetch(GAS_URL, {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  .then(res => {
+  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+  return res.json();
+  .then(data => {
+    if (data.ok) {
+      alert("すべてのデータを保存しました！");
+      loadData();
+    } else {
+      alert("保存に失敗しました");
+    }
+  })
+  .catch(err => {
+    alert("保存エラー: " + err.message);
+  });
+}
+
+function loadData() {
+  fetch(GAS_URL)
+   .then(res => res.json())
+   .then(data => {
+  document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+   .then(data => {
+     if (data.seatMap) {
+       seatMap = data.seatMap;
+       playerData = data.playerData || {};
+       renderSeats();
+       displayMessage('☁ 最新データを読み込みました');
+      }
+      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    })
+    .catch(err => {
+      document.getElementById('result').textContent = "読み込みエラー: " + err.message;
+    });
+   }
+
+  window.sendAllSeatPlayers = sendAllSeatPlayers;
+  window.loadData = loadData;
+
+  window.addEventListener('DOMContentLoaded', loadData);
 /* ======================================================
  *  ボタンバインド
  * ==================================================== */
