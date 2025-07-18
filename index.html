@@ -38,10 +38,16 @@
         <!-- ボタン郡：ID を JS に完全準拠 -->
         <button id="btnUndo">↩ Undo</button>
         <button id="btnSaveCSV">📄 CSVで保存</button>
-        <button id="btnStore">☁ Driveに保存</button>
-        <button id="btnRefresh">📥 Driveから読み込み</button>
       </section>
-
+  　
+      <section>
+        <input id="seatMap" placeholder="座席" />
+        <input id="playerData" placeholder="名前" />
+        <button onclick="sendFormData()">☁ Driveに保存</button>
+        <button onclick="loadData()">📥 Driveから読み込み</button>
+        <pre id="result"></pre>
+      </section>
+      
       <!-- 順位登録UI -->
       <section id="rankingSection" class="section" style="display:none">
         <h2>順位登録モード</h2>
@@ -55,8 +61,40 @@
 
   <!-- HTML5 QRコードスキャンライブラリ -->
   <script src="https://unpkg.com/html5-qrcode@2.3.7"></script>
+ 
+  <script>
+    const GAS_URL = 'URLを入力'
 
-  <!-- 自作スクリプト -->
+    function sendFormData() {
+      const name = document.getElementById('playerData').value;
+      const seat = document.getElementById('seatMap').value;
+     
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("seat", seat);
+
+      fetch(GAS_URL, {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("保存しました！");
+        console.log(data);
+        loadData(); // 追加後に読み直す
+      });
+    }
+
+    function loadData() {
+      fetch(GAS_URL)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('result').textContent =
+            JSON.stringify(data, null, 2);
+        });
+    }
+  </script>
+  
   <script type="module" src="./app.js"></script>
 </body>
 </html>
