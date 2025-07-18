@@ -44,10 +44,10 @@
         <input id="seatMap" placeholder="座席" />
         <input id="playerData" placeholder="名前" />
         <br />
-        <button id="btnSave" onclick="sendAllSeatPlayers()">☁ Driveに保存</button>
-        <button id="btnLoad" onclick="loadData()">📥 Driveから読み込み</button>      
+        <button id="btnSaveAll" onclick="sendAllSeatPlayers()">☁ 全座席のプレイヤーをまとめて保存</button>
+        <button id="btnLoad" onclick="loadData()">📥 Driveから読み込み</button>
         <h3>登録済みデータ</h3>
-        <pre id="result">ここに読み込まれたデータが表示されます</pre>
+        <pre id="result" style="white-space:pre-wrap;"></pre> <!-- 結果表示用 -->
       </section>
 
       <!-- 順位登録UI -->
