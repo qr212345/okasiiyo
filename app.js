@@ -515,14 +515,6 @@ function bindButtons() {
 /* ======================================================
  *  初期化
  * ==================================================== */
-function bindButtons() {
-  document.getElementById('btnSaveAll')?.addEventListener('click', sendAllSeatPlayers);
-  document.getElementById('btnLoad')?.addEventListener('click', loadData);
-  document.getElementById('btnUndo')?.addEventListener('click', undoAction);
-  document.getElementById('btnSaveCSV')?.addEventListener('click', saveToCSV);
-  document.getElementById('btnConfirmRanking')?.addEventListener('click', confirmRanking);
-}
-
 /* グローバル公開 */
 Object.assign(window, {
   navigate,
