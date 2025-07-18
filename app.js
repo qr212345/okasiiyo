@@ -3,8 +3,6 @@
  **********************/
 
 /* ======== 定数 ======== */
-const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyp_pxgcnKPscZXcLAFzLSEp_RDaWAZH7LX5_VFvsNyEz3yGExU-1jDdU-z6AHE1G8l/exec';
-const SECRET   = 'kosen-brain-super-secret';
 const SCAN_COOLDOWN_MS = 1500;
 const POLL_INTERVAL_MS = 20_000;
 
@@ -66,6 +64,7 @@ function handleScanSuccess(decodedText) {
     seatMap[currentSeatId].push(decodedText);
     playerData[decodedText] ??= { nickname: decodedText, rate: 50, lastRank: null, bonus: 0 };
     actionHistory.push({ type: 'addPlayer', seatId: currentSeatId, playerId: decodedText });
+    saveActionHistory();
     displayMessage(`✅ ${decodedText} 追加`);
     saveToLocalStorage();
     renderSeats();
@@ -106,7 +105,8 @@ function renderSeats() {
     removeSeat.className = 'remove-button';
     removeSeat.onclick = () => {
       if (confirm(`座席 ${seatId} を削除しますか？`)) {
-        actionHistory.push({ type: 'removeSeat', seatId, players: seatMap[seatId] });
+        actionHistory.push({ type: 'removeSeat', seatId, players: [...seatMap[seatId]] });
+        saveActionHistory();
         delete seatMap[seatId];
         saveToLocalStorage();
         renderSeats();
@@ -142,10 +142,12 @@ function renderSeats() {
 }
 
 function removePlayer(seatId, playerId) {
-  const idx = seatMap[seatId]?.indexOf(playerId);
+  if (!seatMap[seatId]) return;
+  const idx = seatMap[seatId].indexOf(playerId);
   if (idx === -1) return;
   seatMap[seatId].splice(idx, 1);
   actionHistory.push({ type: 'removePlayer', seatId, playerId, index: idx });
+  saveActionHistory();
   saveToLocalStorage();
   renderSeats();
 }
@@ -156,6 +158,8 @@ function undoAction() {
     return;
   }
   const last = actionHistory.pop();
+  saveActionHistory();
+  
   switch (last.type) {
     case 'addPlayer':
       seatMap[last.seatId] = seatMap[last.seatId].filter(p => p !== last.playerId);
@@ -418,55 +422,70 @@ function saveToCSV() {
   a.download = 'player_ranking.csv';
   a.click();
 }
- 
+
+function saveActionHistory() {
+  localStorage.setItem('actionHistory', JSON.stringify(actionHistory));
+}
+
+function loadActionHistory() {
+  const stored = localStorage.getItem('actionHistory');
+  if (stored) {
+    try {
+      actionHistory = JSON.parse(stored);
+    } catch {
+      actionHistory = [];
+    }
+  }
+}
+
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwCnJbf3oGz1U9lvrXR7uF6fHuIZfwP4tb8b_Iu5lw-6OS2mXumIX1aFhaDuh0xyGI/exec'
 
-function sendAllSeatPlayers() {
+async function sendAllSeatPlayers() {
   if (Object.keys(seatMap).length === 0) {
     alert("登録された座席とプレイヤーがありません");
     return;
   }
 
-  const payload = { seatMap };
+  try {
+    const response = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seatMap, playerData, time: new Date().toISOString() }),
+    });
 
-  fetch(GAS_URL, {
-    method: "POST",
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  .then(res => {
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    return res.json();
-  })
-  .then(data => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
     if (data.ok) {
       alert("すべてのデータを保存しました！");
       loadData();
     } else {
       alert("保存に失敗しました");
     }
-  })
-  .catch(err => {
+  } catch (err) {
     alert("保存エラー: " + err.message);
-  });
+  }
 }
 
-function loadData() {
-  fetch(GAS_URL)
-    .then(res => res.json())
-    .then(data => {
-      if (data.seatMap) {
-        seatMap = data.seatMap;
-        playerData = data.playerData || {};
-        renderSeats();
-        displayMessage('☁ 最新データを読み込みました');
-      }
-      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
-    })
-    .catch(err => {
-      document.getElementById('result').textContent = "読み込みエラー: " + err.message;
-    });
+async function loadData() {
+  try {
+    const res = await fetch(GAS_URL);
+    const data = await res.json();
+    if (data.seatMap) {
+      seatMap = data.seatMap;
+      playerData = data.playerData || {};
+      renderSeats();
+      displayMessage('☁ 最新データを読み込みました');
+    }
+    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    document.getElementById('result').textContent = "読み込みエラー: " + err.message;
+  }
 }
+
 
   window.sendAllSeatPlayers = sendAllSeatPlayers;
   window.loadData = loadData;
@@ -487,10 +506,11 @@ function bindButtons() {
  *  初期化
  * ==================================================== */
 document.addEventListener('DOMContentLoaded', async () => {
-  initCamera();
   loadFromLocalStorage();
+  loadActionHistory();
   renderSeats();
   bindButtons();
+  initCamera();
   startPolling();
   await loadData();
 });
