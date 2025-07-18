@@ -13,6 +13,7 @@ let isSaving = false;
 let qrReader = null;
 let rankingQrReader = null;
 let qrActive = false;
+let rankingQrActive = false;
 let isRankingMode = false;
 
 let currentSeatId = null;
@@ -40,7 +41,30 @@ function displayMessage(msg) {
   msgTimer = setTimeout(() => { area.textContent = ''; }, 3000);
 }
 
-/* ====== QRコード読み取り関連 ====== */
+/* ====== カメラ操作 ====== */
+async function stopCamera() {
+  if (qrReader && qrActive) {
+    await qrReader.stop();
+    qrReader.clear();
+    qrReader = null;
+    qrActive = false;
+  }
+}
+
+async function stopRankingCamera() {
+  if (rankingQrReader && rankingQrActive) {
+    await rankingQrReader.stop();
+    rankingQrReader.clear();
+    rankingQrReader = null;
+    rankingQrActive = false;
+  }
+}
+
+async function stopAllCameras() {
+  await stopCamera();
+  await stopRankingCamera();
+}
+
 async function initCamera() {
   const qrRegion = document.getElementById('reader');
   if (!qrRegion) return;
@@ -51,59 +75,73 @@ async function initCamera() {
     return;
   }
 
+  await stopAllCameras();
+
   try {
-    if (qrReader) {
-      await qrReader.stop();
-      qrReader.clear();
-      qrReader = null;
-    }
     qrReader = new Html5Qrcode("reader");
     await qrReader.start(
       { facingMode: "environment" },
       { fps: 10, qrbox: 250 },
       qrCodeMessage => {
-        // QRコード読み取り成功時の処理
         handleScanSuccess(qrCodeMessage);
       },
-      errorMessage => {
-        // 読み取りエラー時は無視でOK
-        // console.warn("QR読み取りエラー:", errorMessage);
-      }
+      errorMessage => {}
     );
     qrActive = true;
-    displayMessage('📷 カメラ起動中');
+    displayMessage('📷 カメラ起動中（スキャンモード）');
   } catch (err) {
     console.error("QRコード初期化エラー:", err);
     displayMessage("❌ カメラ起動に失敗しました");
   }
 }
 
-function stopCamera() {
-  if (qrReader && qrActive) {
-    qrReader.stop()
-      .then(() => qrReader.clear())
-      .catch(console.error);
-    qrReader = null;
-    qrActive = false;
-  }
+async function startRankingCamera() {
+  if (rankingQrActive) return;
+
+  await stopAllCameras();
+
+  rankingQrReader = new Html5Qrcode('rankingReader');
+  rankingQrReader.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: 250 },
+    decodedText => {
+      if (decodedText.startsWith('table')) {
+        rankingSeatId = decodedText;
+        displayMessage(`✅ 座席 ${decodedText} 読み取り成功`);
+
+        populateRankingList(rankingSeatId);
+
+        // 順位確定まで停止しない設計
+      } else if (decodedText.startsWith('player')) {
+        handleRankingMode(decodedText);
+      } else {
+        displayMessage('⚠ 座席またはプレイヤーQRのみ有効です');
+      }
+    },
+    errorMessage => {}
+  ).then(() => {
+    rankingQrActive = true;
+    displayMessage('📷 カメラ起動中（順位登録モード）');
+  }).catch(err => {
+    console.error(err);
+    displayMessage('❌ 順位登録用カメラ起動失敗');
+  });
 }
 
+/* ====== QRコード読み取り処理 ====== */
 function handleScanSuccess(decodedText) {
   const now = Date.now();
   if (decodedText === lastScannedText && now - lastScanTime < SCAN_COOLDOWN_MS) {
-    // 同じQR連続読み取り防止
     return;
   }
   lastScannedText = decodedText;
   lastScanTime = now;
 
   if (decodedText.startsWith('table')) {
-    // 座席QRコードの読み取り
     currentSeatId = decodedText;
     if (!seatMap[currentSeatId]) seatMap[currentSeatId] = [];
     displayMessage(`✅ 座席セット: ${currentSeatId}`);
   } else if (decodedText.startsWith('player')) {
-    // プレイヤーQRコードの読み取り
     if (!currentSeatId) {
       displayMessage('⚠ 先に座席QRを読み込んでください');
       return;
@@ -125,13 +163,42 @@ function handleScanSuccess(decodedText) {
     saveToLocalStorage();
     renderSeats();
   }
-
-  if (isRankingMode) {
-    handleRankingMode(decodedText);
-  }
 }
 
-/* ====== 順位登録モード関連 ====== */
+/* ====== 順位登録モードでのプレイヤー読み取り処理 ====== */
+function handleRankingMode(decodedText) {
+  if (!rankingSeatId) {
+    displayMessage('⚠ 先に座席QRを読み込んでください（順位登録モード）');
+    return;
+  }
+  if (!decodedText.startsWith('player')) {
+    displayMessage('⚠ プレイヤーQRコードのみ有効です');
+    return;
+  }
+
+  const players = seatMap[rankingSeatId] || [];
+  if (players.includes(decodedText)) {
+    displayMessage('⚠ 既に登録済みのプレイヤーです');
+    return;
+  }
+  if (players.length >= 6) {
+    displayMessage('⚠ この座席は6人まで登録可能です');
+    return;
+  }
+
+  players.push(decodedText);
+  seatMap[rankingSeatId] = players;
+
+  playerData[decodedText] ??= { nickname: decodedText, rate: 50, lastRank: null, bonus: 0, title: null };
+  actionHistory.push({ type: 'addPlayer', seatId: rankingSeatId, playerId: decodedText });
+  saveActionHistory();
+
+  populateRankingList(rankingSeatId);
+  displayMessage(`✅ 順位登録モードでプレイヤー追加: ${decodedText}`);
+  saveToLocalStorage();
+  renderSeats();
+}
+/* ====== ナビゲーション ====== */
 function navigate(section) {
   document.getElementById('scanSection').style.display = (section === 'scan') ? 'block' : 'none';
   document.getElementById('rankingSection').style.display = (section === 'ranking') ? 'block' : 'none';
@@ -141,11 +208,7 @@ function navigate(section) {
     rankingSeatId = null;
     document.getElementById('rankingList').innerHTML = '';
     displayMessage('📋 座席QRを読み込んでください（順位登録モード）');
-
-    // カメラ切替
-    stopCamera();
     startRankingCamera();
-
   } else {
     isRankingMode = false;
     stopRankingCamera();
@@ -153,48 +216,7 @@ function navigate(section) {
   }
 }
 
-function startRankingCamera() {
-  if (rankingQrReader) return; // 既に起動中
-
-  rankingQrReader = new Html5Qrcode('rankingReader');
-  rankingQrReader.start(
-    { facingMode: 'environment' },
-    { fps: 10, qrbox: 250 },
-    decodedText => {
-      if (decodedText.startsWith('table')) {
-        rankingSeatId = decodedText;
-        displayMessage(`✅ 座席 ${decodedText} 読み取り成功`);
-
-        populateRankingList(rankingSeatId);
-
-        // 一旦カメラ停止（必要に応じて再開してください）
-        rankingQrReader.stop()
-          .then(() => {
-            rankingQrReader.clear();
-            rankingQrReader = null;
-          });
-      } else {
-        displayMessage('⚠ 座席QRコードのみ有効です');
-      }
-    },
-    errorMessage => {
-      // 読み取りエラーは無視
-    }
-  ).catch(err => {
-    console.error(err);
-    displayMessage('❌ 順位登録用カメラ起動失敗');
-  });
-}
-
-function stopRankingCamera() {
-  if (rankingQrReader) {
-    rankingQrReader.stop()
-      .then(() => rankingQrReader.clear())
-      .catch(console.error);
-    rankingQrReader = null;
-  }
-}
-
+/* ====== 順位リスト作成とドラッグ可能にする ====== */
 function populateRankingList(seatId) {
   const list = document.getElementById('rankingList');
   list.innerHTML = '';
@@ -202,17 +224,18 @@ function populateRankingList(seatId) {
     const li = document.createElement('li');
     li.textContent = pid;
     li.dataset.playerId = pid;
+    li.draggable = true;
     list.appendChild(li);
   });
   makeListDraggable(list);
   displayMessage(`📋 座席 ${seatId} の順位を並び替えてください`);
 }
 
+/* ====== ドラッグ＆ドロップによる並べ替え ====== */
 function makeListDraggable(ul) {
   let dragging = null;
 
   ul.querySelectorAll('li').forEach(li => {
-    li.draggable = true;
     li.ondragstart = () => {
       dragging = li;
       li.classList.add('dragging');
@@ -233,6 +256,7 @@ function makeListDraggable(ul) {
   });
 }
 
+/* ====== 順位確定とレート計算 ====== */
 function confirmRanking() {
   if (!rankingSeatId) {
     alert('順位登録する座席を読み込んでください');
@@ -249,6 +273,11 @@ function confirmRanking() {
   displayMessage('✅ 順位を保存しました');
   saveToLocalStorage();
   renderSeats();
+
+  stopRankingCamera();
+  isRankingMode = false;
+  rankingSeatId = null;
+  navigate('scan');
 }
 
 /* ====== レート計算ロジック ====== */
@@ -282,6 +311,7 @@ function calculateRate(rankedIds) {
   assignTitles();
 }
 
+/* ====== タイトル付与 ====== */
 function assignTitles() {
   Object.values(playerData).forEach(p => p.title = null);
   Object.entries(playerData)
@@ -292,6 +322,7 @@ function assignTitles() {
     });
 }
 
+/* ====== 王者ID取得 ====== */
 function getTopRatedPlayerId() {
   let topId = null;
   let topRate = -Infinity;
@@ -362,6 +393,7 @@ function renderSeats() {
   });
 }
 
+/* ====== プレイヤー削除 ====== */
 function removePlayer(seatId, playerId) {
   if (!seatMap[seatId]) return;
   const idx = seatMap[seatId].indexOf(playerId);
@@ -373,6 +405,7 @@ function removePlayer(seatId, playerId) {
   renderSeats();
 }
 
+/* ====== 操作履歴で元に戻す ====== */
 function undoAction() {
   if (actionHistory.length === 0) {
     displayMessage('操作履歴がありません');
@@ -396,7 +429,6 @@ function undoAction() {
   saveToLocalStorage();
   renderSeats();
 }
-
 /* ====== ローカルストレージ操作 ====== */
 function saveToLocalStorage() {
   localStorage.setItem('seatMap', JSON.stringify(seatMap));
@@ -415,9 +447,37 @@ function loadFromLocalStorage() {
   }
 }
 
-/* ====== 操作履歴保存 ====== */
+/* ====== 操作履歴共有 ====== */
 function saveActionHistory() {
   localStorage.setItem('actionHistory', JSON.stringify(actionHistory));
+  sendActionHistoryToServer();
+}
+
+async function sendActionHistoryToServer() {
+  try {
+    const res = await fetch(`${GAS_URL}/actionHistory`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actionHistory }),
+    });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+  } catch (e) {
+    console.warn('操作履歴共有失敗:', e);
+  }
+}
+
+async function loadActionHistoryFromServer() {
+  try {
+    const res = await fetch(`${GAS_URL}/actionHistory`);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    if (Array.isArray(data.actionHistory)) {
+      actionHistory = data.actionHistory;
+      saveActionHistory(); // ローカルにも保存
+    }
+  } catch (e) {
+    console.warn('操作履歴読み込み失敗:', e);
+  }
 }
 
 /* ====== Google Drive連携（GAS） ====== */
@@ -448,6 +508,7 @@ function stopPolling() {
   pollTimer = null;
 }
 
+/* ====== データ保存 ====== */
 async function store() {
   isSaving = true;
   stopPolling();
@@ -477,6 +538,7 @@ async function store() {
   }
 }
 
+/* ====== 全データ送信（外部連携用） ====== */
 async function sendAllSeatPlayers() {
   if (Object.keys(seatMap).length === 0) {
     alert("登録された座席とプレイヤーがありません");
@@ -505,6 +567,7 @@ async function sendAllSeatPlayers() {
   }
 }
 
+/* ====== データ読み込み ====== */
 async function refresh() {
   const loaded = await loadJson();
   if (loaded && loaded.seatMap) {
@@ -515,6 +578,7 @@ async function refresh() {
   }
 }
 
+/* ====== GASデータロード ====== */
 async function loadJson() {
   try {
     const response = await fetch(GAS_URL);
@@ -526,6 +590,7 @@ async function loadJson() {
   }
 }
 
+/* ====== GASデータ保存 ====== */
 async function saveJson(data, rev = 0) {
   try {
     const response = await fetch(GAS_URL, {
@@ -542,6 +607,7 @@ async function saveJson(data, rev = 0) {
   }
 }
 
+/* ====== データ読み込み詳細表示 ====== */
 async function loadData() {
   const data = await loadJson();
   if (!data) {
@@ -560,11 +626,13 @@ async function loadData() {
 /* ====== 初期化 ====== */
 async function init() {
   loadFromLocalStorage();
+  await loadActionHistoryFromServer();
   renderSeats();
   displayMessage('📢 起動しました');
   await initCamera();
   startPolling();
 
+  // ボタンイベント登録
   document.getElementById('btnSave').onclick = store;
   document.getElementById('btnLoad').onclick = refresh;
   document.getElementById('btnUndo').onclick = undoAction;
