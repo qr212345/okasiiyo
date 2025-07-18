@@ -515,10 +515,12 @@ function bindButtons() {
 
 // ページロード時にイベントをバインド
 window.addEventListener('DOMContentLoaded', () => {
-  bindButtons();          // ボタンイベント付与
+  bindButtons();  // ボタンイベント付与
+  loadActionHistory();
   loadData();             // 初回データ読み込み
   renderSeats();          // 表示更新など
-  initCamera();           // QRコードリーダー起動など（必要なら）
+  initCamera(); // QRコードリーダー起動など（必要なら）
+  startPolling();
 });
 /* ======================================================
  *  初期化
