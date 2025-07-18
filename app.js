@@ -436,7 +436,7 @@ function loadActionHistory() {
   }
 }
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzYGlFVCAeKCnVJywblRki5L6_XOHsJTul_TkHJoD-e5IFZ16LAu-6oajmH1-TZKC8/exec'
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwoVuMmExcSKOfc9buYEJzFaqrV9EcUjbfWo8p0WxGDEVHB0vV6gObppiUD7x7XCc8/exec'
 
 async function sendAllSeatPlayers() {
   if (Object.keys(seatMap).length === 0) {
