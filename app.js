@@ -1,7 +1,8 @@
 /**********************
  *  ババ抜き大会管理  *
  **********************/
-import { Html5Qrcode } from "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.7/es/index.min.js";
+import { Html5Qrcode } from "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.7/html5-qrcode.min.js
+";
 /* ======== 定数 ======== */
 const SCAN_COOLDOWN_MS = 1500;
 const POLL_INTERVAL_MS = 20_000;
