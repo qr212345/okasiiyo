@@ -1,83 +1,53 @@
 /**********************
- *  ババ抜き大会管理  *
+ * ババ抜き大会管理 *
  **********************/
-const SCAN_COOLDOWN_MS = 1500;
-const POLL_INTERVAL_MS = 20_000;
 
-/* ======== グローバル状態 ======== */
-let qrReader, rankingQrReader;
-let qrActive       = false;
-let isRankingMode  = false;
-let isSaving       = false;
-let pollTimer      = null;
-let currentSeatId  = null;
-let rankingSeatId  = null;
-let lastScanTime   = 0;
+const GAS_URL = 'YOUR_GAS_DEPLOYED_URL_HERE'; // ← あなたのGAS公開URLを入れてください
+const POLL_INTERVAL_MS = 20000; // 20秒間隔で他端末変更をチェック
+const SCAN_COOLDOWN_MS = 1500;  // 同じQRを連続読みしない猶予
+
+/* ====== グローバル状態 ====== */
+let pollTimer = null;
+let isSaving = false;
+
+let qrReader = null;
+let rankingQrReader = null;
+let qrActive = false;
+let isRankingMode = false;
+
+let currentSeatId = null;
+let rankingSeatId = null;
+
+let lastScanTime = 0;
 let lastScannedText = '';
-let msgTimer       = null;
 
-let seatMap       = {};      // { table01: [player01,…] }
-let playerData    = {};      // { playerId: {…} }
-let actionHistory = [];
-let qr;
-/* ======== ユーティリティ ======== */
-const delay = ms => new Promise(res => setTimeout(res, ms));
+let seatMap = {};       // { table01: [player01, player02, ...] }
+let playerData = {};    // { playerId: { nickname, rate, lastRank, bonus, title } }
+let actionHistory = []; // 操作履歴（undo用）
+
+let msgTimer = null;
+
+/* ====== ユーティリティ ====== */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function displayMessage(msg) {
   const area = document.getElementById('messageArea');
   if (!area) return;
   area.textContent = msg;
   clearTimeout(msgTimer);
-  msgTimer = setTimeout(() => (area.textContent = ''), 3000);
+  msgTimer = setTimeout(() => { area.textContent = ''; }, 3000);
 }
 
-/* ======================================================
- *  QR スキャン
- * ==================================================== */
-function handleScanSuccess(decodedText) {
-  const now = Date.now();
-  if (decodedText === lastScannedText && now - lastScanTime < SCAN_COOLDOWN_MS) return;
-
-  lastScannedText = decodedText;
-  lastScanTime    = now;
-
-  if (decodedText.startsWith('table')) {
-    currentSeatId = decodedText;
-    seatMap[currentSeatId] ??= [];
-    displayMessage(`✅ 座席セット: ${currentSeatId}`);
-  } else if (decodedText.startsWith('player')) {
-    if (!currentSeatId) {
-      displayMessage('⚠ 先に座席QRを読み込んでください');
-      return;
-    }
-    if (seatMap[currentSeatId].includes(decodedText)) {
-      displayMessage('⚠ 既に登録済み');
-      return;
-    }
-    if (seatMap[currentSeatId].length >= 6) {
-      displayMessage('⚠ この座席は6人まで');
-      return;
-    }
-
-    seatMap[currentSeatId].push(decodedText);
-    playerData[decodedText] ??= { nickname: decodedText, rate: 50, lastRank: null, bonus: 0 };
-    actionHistory.push({ type: 'addPlayer', seatId: currentSeatId, playerId: decodedText });
-    saveActionHistory();
-    displayMessage(`✅ ${decodedText} 追加`);
-    saveToLocalStorage();
-    renderSeats();
-  }
-
-  handleRankingMode(decodedText);
-}
-
-// app.js内
+/* ====== QRコード読み取り関連 ====== */
 async function initCamera() {
   const qrRegion = document.getElementById('reader');
   if (!qrRegion) return;
 
   if (typeof Html5Qrcode === 'undefined') {
     console.error("Html5Qrcodeが読み込まれていません");
+    displayMessage("QRコードライブラリの読み込みに失敗しました");
     return;
   }
 
@@ -92,51 +62,265 @@ async function initCamera() {
       { facingMode: "environment" },
       { fps: 10, qrbox: 250 },
       qrCodeMessage => {
-        console.log("QRコード内容:", qrCodeMessage);
-        alert(`読み取り成功: ${qrCodeMessage}`);
+        // QRコード読み取り成功時の処理
         handleScanSuccess(qrCodeMessage);
       },
       errorMessage => {
-        console.warn("読み取りエラー:", errorMessage);
+        // 読み取りエラー時は無視でOK
+        // console.warn("QR読み取りエラー:", errorMessage);
       }
     );
+    qrActive = true;
+    displayMessage('📷 カメラ起動中');
   } catch (err) {
     console.error("QRコード初期化エラー:", err);
+    displayMessage("❌ カメラ起動に失敗しました");
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  // initCamera は QRライブラリが読み込まれた後で呼ぶ
-  initCamera();
+function stopCamera() {
+  if (qrReader && qrActive) {
+    qrReader.stop()
+      .then(() => qrReader.clear())
+      .catch(console.error);
+    qrReader = null;
+    qrActive = false;
+  }
+}
 
-  if (typeof loadData === "function") {
-    loadData();
-  } else {
-    console.warn("loadData 関数が見つかりません");
+function handleScanSuccess(decodedText) {
+  const now = Date.now();
+  if (decodedText === lastScannedText && now - lastScanTime < SCAN_COOLDOWN_MS) {
+    // 同じQR連続読み取り防止
+    return;
+  }
+  lastScannedText = decodedText;
+  lastScanTime = now;
+
+  if (decodedText.startsWith('table')) {
+    // 座席QRコードの読み取り
+    currentSeatId = decodedText;
+    if (!seatMap[currentSeatId]) seatMap[currentSeatId] = [];
+    displayMessage(`✅ 座席セット: ${currentSeatId}`);
+  } else if (decodedText.startsWith('player')) {
+    // プレイヤーQRコードの読み取り
+    if (!currentSeatId) {
+      displayMessage('⚠ 先に座席QRを読み込んでください');
+      return;
+    }
+    if (seatMap[currentSeatId].includes(decodedText)) {
+      displayMessage('⚠ 既に登録済みのプレイヤーです');
+      return;
+    }
+    if (seatMap[currentSeatId].length >= 6) {
+      displayMessage('⚠ この座席は6人まで登録可能です');
+      return;
+    }
+
+    seatMap[currentSeatId].push(decodedText);
+    playerData[decodedText] ??= { nickname: decodedText, rate: 50, lastRank: null, bonus: 0, title: null };
+    actionHistory.push({ type: 'addPlayer', seatId: currentSeatId, playerId: decodedText });
+    saveActionHistory();
+    displayMessage(`✅ プレイヤー追加: ${decodedText}`);
+    saveToLocalStorage();
+    renderSeats();
   }
 
-  if (typeof bindButtons === "function") bindButtons();
-  if (typeof loadActionHistory === "function") loadActionHistory();
-  if (typeof renderSeats === "function") renderSeats();
-  if (typeof startPolling === "function") startPolling();
-});
-/* ======================================================
- *  座席表示 & 操作
- * ==================================================== */
+  if (isRankingMode) {
+    handleRankingMode(decodedText);
+  }
+}
+
+/* ====== 順位登録モード関連 ====== */
+function navigate(section) {
+  document.getElementById('scanSection').style.display = (section === 'scan') ? 'block' : 'none';
+  document.getElementById('rankingSection').style.display = (section === 'ranking') ? 'block' : 'none';
+
+  if (section === 'ranking') {
+    isRankingMode = true;
+    rankingSeatId = null;
+    document.getElementById('rankingList').innerHTML = '';
+    displayMessage('📋 座席QRを読み込んでください（順位登録モード）');
+
+    // カメラ切替
+    stopCamera();
+    startRankingCamera();
+
+  } else {
+    isRankingMode = false;
+    stopRankingCamera();
+    initCamera();
+  }
+}
+
+function startRankingCamera() {
+  if (rankingQrReader) return; // 既に起動中
+
+  rankingQrReader = new Html5Qrcode('rankingReader');
+  rankingQrReader.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: 250 },
+    decodedText => {
+      if (decodedText.startsWith('table')) {
+        rankingSeatId = decodedText;
+        displayMessage(`✅ 座席 ${decodedText} 読み取り成功`);
+
+        populateRankingList(rankingSeatId);
+
+        // 一旦カメラ停止（必要に応じて再開してください）
+        rankingQrReader.stop()
+          .then(() => {
+            rankingQrReader.clear();
+            rankingQrReader = null;
+          });
+      } else {
+        displayMessage('⚠ 座席QRコードのみ有効です');
+      }
+    },
+    errorMessage => {
+      // 読み取りエラーは無視
+    }
+  ).catch(err => {
+    console.error(err);
+    displayMessage('❌ 順位登録用カメラ起動失敗');
+  });
+}
+
+function stopRankingCamera() {
+  if (rankingQrReader) {
+    rankingQrReader.stop()
+      .then(() => rankingQrReader.clear())
+      .catch(console.error);
+    rankingQrReader = null;
+  }
+}
+
+function populateRankingList(seatId) {
+  const list = document.getElementById('rankingList');
+  list.innerHTML = '';
+  (seatMap[seatId] || []).forEach(pid => {
+    const li = document.createElement('li');
+    li.textContent = pid;
+    li.dataset.playerId = pid;
+    list.appendChild(li);
+  });
+  makeListDraggable(list);
+  displayMessage(`📋 座席 ${seatId} の順位を並び替えてください`);
+}
+
+function makeListDraggable(ul) {
+  let dragging = null;
+
+  ul.querySelectorAll('li').forEach(li => {
+    li.draggable = true;
+    li.ondragstart = () => {
+      dragging = li;
+      li.classList.add('dragging');
+    };
+    li.ondragend = () => {
+      dragging = null;
+      li.classList.remove('dragging');
+    };
+    li.ondragover = e => {
+      e.preventDefault();
+      const tgt = e.target;
+      if (tgt && tgt !== dragging && tgt.nodeName === 'LI') {
+        const rect = tgt.getBoundingClientRect();
+        const after = (e.clientY - rect.top) > rect.height / 2;
+        tgt.parentNode.insertBefore(dragging, after ? tgt.nextSibling : tgt);
+      }
+    };
+  });
+}
+
+function confirmRanking() {
+  if (!rankingSeatId) {
+    alert('順位登録する座席を読み込んでください');
+    return;
+  }
+
+  const ordered = Array.from(document.querySelectorAll('#rankingList li')).map(li => li.dataset.playerId);
+
+  ordered.forEach((pid, i) => {
+    if (playerData[pid]) playerData[pid].lastRank = i + 1;
+  });
+
+  calculateRate(ordered);
+  displayMessage('✅ 順位を保存しました');
+  saveToLocalStorage();
+  renderSeats();
+}
+
+/* ====== レート計算ロジック ====== */
+function calculateRate(rankedIds) {
+  rankedIds.forEach((pid, i) => {
+    const p = playerData[pid];
+    if (!p) return;
+
+    const prevRank = p.lastRank ?? rankedIds.length;
+    const diff = prevRank - (i + 1); // 上がったほど正の値
+
+    let point = diff * 2;
+
+    // 特殊ルール（王者が最下位に落ちたら大減点など）
+    if (prevRank === 1 && i === rankedIds.length - 1) point = -8;
+    if (prevRank === rankedIds.length && i === 0) point = 8;
+
+    // 高レート補正
+    if (p.rate >= 80) point = Math.floor(point * 0.8);
+
+    // 王座奪取ボーナス
+    const topId = getTopRatedPlayerId();
+    if (topId && p.rate <= playerData[topId].rate && (i + 1) < playerData[topId].lastRank) {
+      point += 2;
+    }
+
+    p.bonus = point;
+    p.rate = Math.max(30, p.rate + point);
+  });
+
+  assignTitles();
+}
+
+function assignTitles() {
+  Object.values(playerData).forEach(p => p.title = null);
+  Object.entries(playerData)
+    .sort((a, b) => b[1].rate - a[1].rate)
+    .slice(0, 3)
+    .forEach(([pid], idx) => {
+      playerData[pid].title = ['👑 王者', '🥈 挑戦者', '🥉 鬼気迫る者'][idx];
+    });
+}
+
+function getTopRatedPlayerId() {
+  let topId = null;
+  let topRate = -Infinity;
+  for (const [pid, pdata] of Object.entries(playerData)) {
+    if (pdata.rate > topRate) {
+      topRate = pdata.rate;
+      topId = pid;
+    }
+  }
+  return topId;
+}
+
+/* ====== UI表示更新 ====== */
 function renderSeats() {
   const seatList = document.getElementById('seatList');
+  if (!seatList) return;
   seatList.innerHTML = '';
 
   Object.keys(seatMap).forEach(seatId => {
     const block = document.createElement('div');
     block.className = 'seat-block';
 
-    /* 見出し */
+    // 見出し
     const title = document.createElement('h3');
     title.textContent = `座席: ${seatId}`;
     const removeSeat = document.createElement('span');
     removeSeat.textContent = '✖';
     removeSeat.className = 'remove-button';
+    removeSeat.style.cursor = 'pointer';
     removeSeat.onclick = () => {
       if (confirm(`座席 ${seatId} を削除しますか？`)) {
         actionHistory.push({ type: 'removeSeat', seatId, players: [...seatMap[seatId]] });
@@ -149,26 +333,29 @@ function renderSeats() {
     title.appendChild(removeSeat);
     block.appendChild(title);
 
-    /* プレイヤー */
+    // プレイヤーリスト
     seatMap[seatId].forEach(pid => {
-      const p  = playerData[pid];
+      const p = playerData[pid] || {};
       const rc = p.bonus ?? 0;
-      block.insertAdjacentHTML(
-        'beforeend',
-        `
-        <div class="player-entry">
-          <div>
-            <strong>${pid}</strong>
-            ${p.title ? `<span class="title-badge title-${p.title}">${p.title}</span>` : ''}
-            <span style="margin-left:10px;color:#888;">Rate: ${p.rate}</span>
-            <span class="rate-change ${rc > 0 ? 'rate-up' : rc < 0 ? 'rate-down' : 'rate-zero'}">
-              ${rc > 0 ? '↑' : rc < 0 ? '↓' : '±'}${Math.abs(rc)}
-            </span>
-          </div>
-          <span class="remove-button" onclick="removePlayer('${seatId}','${pid}')">✖</span>
+
+      const playerDiv = document.createElement('div');
+      playerDiv.className = 'player-entry';
+
+      playerDiv.innerHTML = `
+        <div>
+          <strong>${pid}</strong>
+          ${p.title ? `<span class="title-badge title-${p.title}">${p.title}</span>` : ''}
+          <span style="margin-left:10px;color:#888;">Rate: ${p.rate ?? '?'}</span>
+          <span class="rate-change ${rc > 0 ? 'rate-up' : rc < 0 ? 'rate-down' : 'rate-zero'}">
+            ${rc > 0 ? '↑' : rc < 0 ? '↓' : '±'}${Math.abs(rc)}
+          </span>
         </div>
-      `
-      );
+        <span class="remove-button" style="cursor:pointer;">✖</span>
+      `;
+
+      playerDiv.querySelector('.remove-button').onclick = () => removePlayer(seatId, pid);
+
+      block.appendChild(playerDiv);
     });
 
     seatList.appendChild(block);
@@ -187,13 +374,13 @@ function removePlayer(seatId, playerId) {
 }
 
 function undoAction() {
-  if (!actionHistory.length) {
+  if (actionHistory.length === 0) {
     displayMessage('操作履歴がありません');
     return;
   }
   const last = actionHistory.pop();
   saveActionHistory();
-  
+
   switch (last.type) {
     case 'addPlayer':
       seatMap[last.seatId] = seatMap[last.seatId].filter(p => p !== last.playerId);
@@ -210,197 +397,41 @@ function undoAction() {
   renderSeats();
 }
 
-/* ======== ローカルストレージ ======== */
+/* ====== ローカルストレージ操作 ====== */
 function saveToLocalStorage() {
   localStorage.setItem('seatMap', JSON.stringify(seatMap));
   localStorage.setItem('playerData', JSON.stringify(playerData));
+  localStorage.setItem('actionHistory', JSON.stringify(actionHistory));
 }
+
 function loadFromLocalStorage() {
-  seatMap    = JSON.parse(localStorage.getItem('seatMap')    || '{}');
+  seatMap = JSON.parse(localStorage.getItem('seatMap') || '{}');
   playerData = JSON.parse(localStorage.getItem('playerData') || '{}');
-}
-
-/* ======================================================
- *  画面遷移 & 順位登録
- * ==================================================== */
-function navigate(section) {
-  document.getElementById('scanSection').style.display    = section === 'scan'    ? 'block' : 'none';
-  document.getElementById('rankingSection').style.display = section === 'ranking' ? 'block' : 'none';
-
-  if (section === 'ranking') {
-    isRankingMode  = true;
-    rankingSeatId  = null;
-    document.getElementById('rankingList').innerHTML = '';
-    displayMessage('座席QR を読み込んでください（順位登録モード）');
-
-    if (qrReader) {
-      qrReader.stop().then(() => {
-        qrReader.clear();
-        qrReader = null;
-      });
-    }
-
-    if (!rankingQrReader) {
-      rankingQrReader = new Html5Qrcode('rankingReader');
-      rankingQrReader
-        .start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, decodedText => {
-          if (decodedText.startsWith('table')) {
-            handleRankingMode(decodedText);
-            displayMessage(`✅ 座席 ${decodedText} 読み取り成功`);
-            rankingQrReader.stop().then(() => {
-              rankingQrReader.clear();
-              rankingQrReader = null;
-            });
-          } else {
-            displayMessage('⚠ 座席コードのみ読み取り可能です');
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          displayMessage('❌ カメラの起動に失敗しました（順位登録）');
-        });
-    }
-  } else {
-    isRankingMode = false;
-
-    if (rankingQrReader) {
-      rankingQrReader.stop().then(() => {
-        rankingQrReader.clear();
-        rankingQrReader = null;
-      });
-    }
-
-    if (!qrReader) {
-      initCamera();
-    }
+  const hist = localStorage.getItem('actionHistory');
+  try {
+    actionHistory = hist ? JSON.parse(hist) : [];
+  } catch {
+    actionHistory = [];
   }
 }
 
-function handleRankingMode(tableCode) {
-  if (!isRankingMode) return;
-  rankingSeatId = tableCode;
-
-  const list = document.getElementById('rankingList');
-  list.innerHTML = '';
-  (seatMap[tableCode] || []).forEach(pid => {
-    const li = document.createElement('li');
-    li.textContent      = pid;
-    li.dataset.playerId = pid;
-    list.appendChild(li);
-  });
-
-  makeListDraggable(list);
-  displayMessage(`座席 ${tableCode} の順位を並び替えてください`);
+/* ====== 操作履歴保存 ====== */
+function saveActionHistory() {
+  localStorage.setItem('actionHistory', JSON.stringify(actionHistory));
 }
 
-function makeListDraggable(ul) {
-  let dragging = null;
-  ul.querySelectorAll('li').forEach(li => {
-    li.draggable = true;
-    li.ondragstart = () => {
-      dragging = li;
-      li.classList.add('dragging');
-    };
-    li.ondragend = () => {
-      dragging = null;
-      li.classList.remove('dragging');
-    };
-    li.ondragover = e => {
-      e.preventDefault();
-      const tgt = e.target;
-      if (tgt && tgt !== dragging && tgt.nodeName === 'LI') {
-        const r   = tgt.getBoundingClientRect();
-        const aft = (e.clientY - r.top) > r.height / 2;
-        tgt.parentNode.insertBefore(dragging, aft ? tgt.nextSibling : tgt);
-      }
-    };
-  });
-}
-
-function confirmRanking() {
-  if (!rankingSeatId) return;
-
-  const ordered = Array.from(document.querySelectorAll('#rankingList li')).map(
-    li => li.dataset.playerId
-  );
-
-  ordered.forEach((pid, idx) => {
-    if (playerData[pid]) playerData[pid].lastRank = idx + 1;
-  });
-
-  calculateRate(ordered);
-  displayMessage('✅ 順位を保存しました');
-  saveToLocalStorage();
-}
-
-/* ======================================================
- *  レート計算
- * ==================================================== */
-function calculateRate(rankedIds) {
-  rankedIds.forEach((pid, i) => {
-    const p        = playerData[pid];
-    const prevRank = p.lastRank ?? rankedIds.length;
-    let diff       = prevRank - (i + 1); // 上に行くほど正
-
-    // 基本ポイント
-    let point = diff * 2;
-
-    // 特殊ルール
-    if (prevRank === 1 && i === rankedIds.length - 1) point = -8;
-    if (prevRank === rankedIds.length && i === 0)      point =  8;
-
-    // 高レート補正
-    if (p.rate >= 80) point = Math.floor(point * 0.8);
-
-    // 王座奪取ボーナス
-    const topId = getTopRatedPlayerId();
-    if (topId && p.rate <= playerData[topId].rate && i + 1 < playerData[topId].lastRank)
-      point += 2;
-
-    p.bonus = point;
-    p.rate  = Math.max(30, p.rate + point);
-  });
-
-  assignTitles();
-}
-
-function assignTitles() {
-  Object.values(playerData).forEach(p => (p.title = null));
-  Object.entries(playerData)
-    .sort((a, b) => b[1].rate - a[1].rate)
-    .slice(0, 3)
-    .forEach(([pid], idx) => {
-      playerData[pid].title = ['👑 王者', '🥈 挑戦者', '🥉 鬼気迫る者'][idx];
-    });
-}
-
-function getTopRatedPlayerId() {
-  let topId = null;
-  let topRate = -Infinity;
-  for (const [pid, pdata] of Object.entries(playerData)) {
-    if (pdata.rate > topRate) {
-      topRate = pdata.rate;
-      topId   = pid;
-    }
-  }
-  return topId;
-}
-
-/* ======================================================
- *  Google Drive 連携
- * ==================================================== */
+/* ====== Google Drive連携（GAS） ====== */
 async function pollDrive() {
   if (isSaving) return;
-
   const loaded = await loadJson();
   if (!loaded || !loaded.seatMap) return;
 
   const changed =
-    JSON.stringify(seatMap)    !== JSON.stringify(loaded.seatMap) ||
+    JSON.stringify(seatMap) !== JSON.stringify(loaded.seatMap) ||
     JSON.stringify(playerData) !== JSON.stringify(loaded.playerData);
 
   if (changed) {
-    seatMap    = loaded.seatMap;
+    seatMap = loaded.seatMap;
     playerData = loaded.playerData;
     renderSeats();
     displayMessage('☁ 他端末の変更を反映しました');
@@ -427,11 +458,16 @@ async function store() {
       displayMessage('最新データ取得に失敗しました');
       return;
     }
+
     const rev = current.rev || 0;
     const saveResult = await saveJson({ seatMap, playerData }, rev);
+
     if (saveResult && saveResult.ok) {
       displayMessage(`✅ データ保存成功（rev: ${saveResult.rev}）`);
+    } else {
+      displayMessage(`⚠ 保存に失敗しました（競合またはエラー）`);
     }
+
   } catch (e) {
     displayMessage(`❌ 保存失敗: ${e.message}`);
     console.error(e);
@@ -440,50 +476,6 @@ async function store() {
     startPolling();
   }
 }
-
-async function refresh() {
-  const loaded = await loadJson();
-  if (loaded && loaded.seatMap) {
-    seatMap    = loaded.seatMap;
-    playerData = loaded.playerData;
-    renderSeats();
-    displayMessage('☁ 最新データを読み込みました');
-  }
-}
-
-/* ======================================================
- *  CSV エクスポート
- * ==================================================== */
-function saveToCSV() {
-  const rows = [['ID', 'ニックネーム', 'レート', '前回順位', 'ボーナス', '称号']];
-  for (const id in playerData) {
-    const p = playerData[id];
-    rows.push([id, p.nickname, p.rate, p.lastRank ?? '', p.bonus ?? 0, p.title ?? '']);
-  }
-  const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = 'player_ranking.csv';
-  a.click();
-}
-
-function saveActionHistory() {
-  localStorage.setItem('actionHistory', JSON.stringify(actionHistory));
-}
-
-function loadActionHistory() {
-  const stored = localStorage.getItem('actionHistory');
-  if (stored) {
-    try {
-      actionHistory = JSON.parse(stored);
-    } catch {
-      actionHistory = [];
-    }
-  }
-}
-
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwpPl5t9FaXvVkMqtXRcjGauoPOuCPM7LygQtjx-ZI4s-yyICO11HAtKz_rK0JbC8k/exec'
 
 async function sendAllSeatPlayers() {
   if (Object.keys(seatMap).length === 0) {
@@ -498,24 +490,31 @@ async function sendAllSeatPlayers() {
       body: JSON.stringify({ seatMap, playerData, time: new Date().toISOString() }),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
     const data = await response.json();
 
     if (data.ok) {
-      alert("すべてのデータを保存しました！");
+      alert("✅ すべてのデータを保存しました！");
       loadData();
     } else {
-      alert("保存に失敗しました");
+      alert("⚠ 保存に失敗しました");
     }
   } catch (err) {
-    alert("保存エラー: " + err.message);
+    alert("❌ 保存エラー: " + err.message);
   }
 }
 
-// 純粋にデータ取得だけ担当
+async function refresh() {
+  const loaded = await loadJson();
+  if (loaded && loaded.seatMap) {
+    seatMap = loaded.seatMap;
+    playerData = loaded.playerData;
+    renderSeats();
+    displayMessage('☁ 最新データを読み込みました');
+  }
+}
+
 async function loadJson() {
   try {
     const response = await fetch(GAS_URL);
@@ -527,7 +526,22 @@ async function loadJson() {
   }
 }
 
-// データ取得後の画面更新などはここで担当
+async function saveJson(data, rev = 0) {
+  try {
+    const response = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...data, rev }),
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return await response.json();
+  } catch (err) {
+    console.error("saveJson error:", err);
+    return null;
+  }
+}
+
 async function loadData() {
   const data = await loadJson();
   if (!data) {
@@ -543,42 +557,21 @@ async function loadData() {
   document.getElementById('result').textContent = JSON.stringify(data, null, 2);
 }
 
+/* ====== 初期化 ====== */
+async function init() {
+  loadFromLocalStorage();
+  renderSeats();
+  displayMessage('📢 起動しました');
+  await initCamera();
+  startPolling();
 
-
-  window.sendAllSeatPlayers = sendAllSeatPlayers;
-  window.loadData = loadData;
-/* ======================================================
- *  ボタンバインド
- * ==================================================== */
-function bindButtons() {
-  document.getElementById('btnSaveAll')?.addEventListener('click', sendAllSeatPlayers);
-  document.getElementById('btnLoad')?.addEventListener('click', loadData);
-  document.getElementById('btnUndo')?.addEventListener('click', undoAction);
-  document.getElementById('btnSaveCSV')?.addEventListener('click', saveToCSV);
-  document.getElementById('btnConfirmRanking')?.addEventListener('click', confirmRanking);
+  document.getElementById('btnSave').onclick = store;
+  document.getElementById('btnLoad').onclick = refresh;
+  document.getElementById('btnUndo').onclick = undoAction;
+  document.getElementById('btnSendAll').onclick = sendAllSeatPlayers;
+  document.getElementById('btnRankingMode').onclick = () => navigate('ranking');
+  document.getElementById('btnScanMode').onclick = () => navigate('scan');
+  document.getElementById('btnConfirmRanking').onclick = confirmRanking;
 }
 
-// ページロード時にイベントをバインド
-window.addEventListener('DOMContentLoaded', () => {
-  bindButtons();
-  loadActionHistory();
-  loadData();
-  renderSeats();
-
-  initCamera();  // ここで初めてHtml5Qrcodeを使うので、確実にライブラリは読み込まれている
-
-  startPolling();
-});
-
-/* ======================================================
- *  初期化
- * ==================================================== */
-/* グローバル公開 */
-Object.assign(window, {
-  navigate,
-  navigateToExternal: url => window.open(url, '_blank'),
-  undoAction,
-  saveToCSV,
-  confirmRanking,
-  removePlayer
-});
+window.onload = init;
