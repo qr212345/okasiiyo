@@ -340,24 +340,6 @@ function getTopRatedPlayerId() {
 /* ======================================================
  *  Google Drive 連携
  * ==================================================== */
-async function loadJson() {
-  const res = await fetch(`${ENDPOINT}?rev=true`, { mode: 'cors', cache: 'no-store' });
-  if (!res.ok) throw new Error(res.statusText);
-  return await res.json();
-}
-
-async function saveJson(data, rev = 0) {
-  const body = { data, secret: SECRET, rev };
-  const res  = await fetch(ENDPOINT, {
-    method: 'POST',
-    mode: 'cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) throw new Error(res.statusText);
-  return await res.json();
-}
-
 async function pollDrive() {
   if (isSaving) return;
 
