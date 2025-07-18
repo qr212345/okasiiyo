@@ -56,21 +56,18 @@
     </main>
   </div>
 
-  <!-- ✅ QRライブラリを先に読み込む -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
+ <!-- QRライブラリを先に読み込む -->
+<script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
 
-  <!-- ✅ アプリのメインJS（ライブラリより後） -->
-  <script src="./app.js"></script>
+<!-- app.js の読み込みを window load 後に動的追加 -->
+<script>
+  window.addEventListener('load', () => {
+    const script = document.createElement('script');
+    script.src = './app.js';
+    document.body.appendChild(script);
 
-  <!-- ✅ ③ loadData() のチェック -->
-  <script>
-    window.addEventListener('load', () => {
-      if (typeof loadData === "function") {
-        loadData();
-      } else {
-        console.error('loadData is not available');
-      }
-    });
-  </script>
+    // loadDataの呼び出しはapp.js内か、app.jsが読み込まれてから実行したほうが良いのでここでは不要
+  });
+</script>
 </body>
 </html>
