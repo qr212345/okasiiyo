@@ -19,8 +19,8 @@
     <nav id="sidebar">
       <h2>メニュー</h2>
       <ul>
-        <li onclick="navigate('scan')">📷 QRコードスキャン</li>
-        <li onclick="navigate('ranking')">🥇 順位登録</li>
+        <li id="btnScanMode">📷 QRコードスキャン</li>
+        <li id="btnRankingMode">🥇 順位登録</li>
         <li onclick="navigateToExternal('https://qr212345.github.io/fajjfiur/')">📊 レート表</li>
         <li onclick="navigateToExternal('https://qr212345.github.io/asdfghjkl/')">🪑 座席情報</li>
       </ul>
@@ -39,8 +39,9 @@
       </section>
 
       <section id="saveSection" class="section">
-        <button id="btnSaveAll">☁ Driveへ保存</button>
+        <button id="btnSave">☁ Driveへ保存</button>
         <button id="btnLoad">📥 Driveから読み込み</button>
+        <button id="btnSendAll">📡 全体送信</button> <!-- ← 追加 -->
         <h3>登録済みデータ</h3>
         <pre id="result" style="white-space:pre-wrap;"></pre>
       </section>
