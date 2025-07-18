@@ -1,7 +1,7 @@
 /**********************
  *  ババ抜き大会管理  *
  **********************/
-import { Html5Qrcode } from "https://unpkg.com/html5-qrcode?module";
+import { Html5Qrcode } from "https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.esm.js";
 /* ======== 定数 ======== */
 const SCAN_COOLDOWN_MS = 1500;
 const POLL_INTERVAL_MS = 20_000;
