@@ -41,9 +41,6 @@
       </section>
   　
       <section id="saveSection" class="section">
-        <input id="seatMap" placeholder="座席" />
-        <input id="playerData" placeholder="名前" />
-        <br />
         <button id="btnSaveAll" onclick="sendAllSeatPlayers()">☁ 全座席のプレイヤーをまとめて保存</button>
         <button id="btnLoad" onclick="loadData()">📥 Driveから読み込み</button>
         <h3>登録済みデータ</h3>
@@ -65,5 +62,11 @@
   <script src="https://unpkg.com/html5-qrcode@2.3.7"></script>
    
   <script type="module" src="./app.js"></script>
+
+ <script>
+   window.addEventListener('DOMContentLoaded', () => {
+     loadData(); // ページロード時に自動で読み込む
+   });
+  </script>
 </body>
 </html>
