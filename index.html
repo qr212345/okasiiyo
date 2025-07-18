@@ -60,25 +60,26 @@
 
   <!-- HTML5 QRコードスキャンライブラリ -->
 <script type="module">
-import { Html5Qrcode } from "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.7/es/index.min.js";
+import { Html5Qrcode } from "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.7/html5-qrcode.min.js";
 
-window.initCamera = () => {
-  const qrRegion = document.getElementById('reader');
-  if (!qrRegion) return;
+    // グローバルに登録
+    window.initCamera = async () => {
+      const qrRegion = document.getElementById('reader');
+      if (!qrRegion) return;
 
-  const qrCodeScanner = new Html5Qrcode("reader");
-  qrCodeScanner.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    qrCodeMessage => {
-      console.log("QRコード:", qrCodeMessage);
-      if (window.handleQRCode) window.handleQRCode(qrCodeMessage);
-    },
-    err => {}
-  ).catch(err => {
-    console.error("カメラ起動エラー:", err);
-  });
-};
+      const html5QrCode = new Html5Qrcode("reader");
+      await html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        qrCodeMessage => {
+          console.log("QRコード内容:", qrCodeMessage);
+          alert(`読み取り成功: ${qrCodeMessage}`);
+        },
+        errorMessage => {
+          console.warn("読み取りエラー:", errorMessage);
+        }
+      );
+    };
 
 window.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('reader')) {
@@ -90,12 +91,12 @@ window.addEventListener('DOMContentLoaded', () => {
 <script type="module" src="./app.js"></script>
 
 <script>
-  window.addEventListener('load', () => {
-    if (window.loadData) {
-      window.loadData();
-    } else {
-      console.error('loadData is not available');
-    }
+    window.addEventListener('load', () => {
+      if (window.loadData) {
+        window.loadData();
+      } else {
+        console.error('loadData is not available');
+      }
   });
   </script>
 </body>
