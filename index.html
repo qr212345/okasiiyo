@@ -44,8 +44,8 @@
         <input id="seatMap" placeholder="座席" />
         <input id="playerData" placeholder="名前" />
         <br />
-        <button onclick="sendFormData()">☁ Driveに保存</button>
-        <button onclick="loadData()">📥 Driveから読み込み</button>      
+      　<button id="btnSave" onclick="sendAllSeatPlayers()">☁ Driveに保存</button>
+        <button id="btnLoad" onclick="loadData()">📥 Driveから読み込み</button>      
         <h3>登録済みデータ
         <pre id="result">ここに読み込まれたデータが表示されます</pre>
        </section>
@@ -62,49 +62,7 @@
 
   <!-- HTML5 QRコードスキャンライブラリ -->
   <script src="https://unpkg.com/html5-qrcode@2.3.7"></script>
- 
-  <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwCnJbf3oGz1U9lvrXR7uF6fHuIZfwP4tb8b_Iu5lw-6OS2mXumIX1aFhaDuh0xyGI/exec'
-
-    window.addEventListener('DOMContentLoaded', loadData);
-    
-    function sendFormData() {
-      const name = document.getElementById('playerData').value;
-      const seat = document.getElementById('seatMap').value;
-     
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("seat", seat);
-
-      fetch(GAS_URL, {
-        method: "POST",
-        body: formData
-      })
-      .then(res => res.json())
-      .then(data => {
-        alert("保存しました！");
-        console.log(data);
-        loadData(); // 追加後に読み直す
-      });
-      .catch(err => {
-        alert("保存エラー: " + err.message);
-      });
-    }
-    
-    function loadData() {
-      fetch(GAS_URL)
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('result').textContent =
-            JSON.stringify(data, null, 2);
-        })
-        .catch(err => {
-          document.getElementById('result').textContent =
-            "読み込みエラー: " + err.message;
-        });
-    }
-  </script>
-  
+   
   <script type="module" src="./app.js"></script>
 </body>
 </html>
