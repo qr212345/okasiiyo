@@ -59,11 +59,11 @@
   </div>
 
   <!-- HTML5 QRコードスキャンライブラリ -->
-<script type="module">
-import { Html5Qrcode } from "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.7/html5-qrcode.min.js";
-
+ <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
+ <script>
+      const qr = new Html5Qrcode("reader");
     // グローバルに登録
-    window.initCamera = async () => {
+      window.initCamera = async () => {
       const qrRegion = document.getElementById('reader');
       if (!qrRegion) return;
 
