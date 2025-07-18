@@ -82,13 +82,19 @@ async function initCamera() {
   }
 
   try {
-    const html5QrCode = new Html5Qrcode("reader");
-    await html5QrCode.start(
+    if (qrReader) {
+      await qrReader.stop();
+      qrReader.clear();
+      qrReader = null;
+    }
+    qrReader = new Html5Qrcode("reader");
+    await qrReader.start(
       { facingMode: "environment" },
       { fps: 10, qrbox: 250 },
       qrCodeMessage => {
         console.log("QRコード内容:", qrCodeMessage);
         alert(`読み取り成功: ${qrCodeMessage}`);
+        handleScanSuccess(qrCodeMessage);
       },
       errorMessage => {
         console.warn("読み取りエラー:", errorMessage);
@@ -227,6 +233,13 @@ function navigate(section) {
     document.getElementById('rankingList').innerHTML = '';
     displayMessage('座席QR を読み込んでください（順位登録モード）');
 
+    if (qrReader) {
+      qrReader.stop().then(() => {
+        qrReader.clear();
+        qrReader = null;
+      });
+    }
+
     if (!rankingQrReader) {
       rankingQrReader = new Html5Qrcode('rankingReader');
       rankingQrReader
@@ -249,13 +262,17 @@ function navigate(section) {
     }
   } else {
     isRankingMode = false;
+
     if (rankingQrReader) {
       rankingQrReader.stop().then(() => {
         rankingQrReader.clear();
         rankingQrReader = null;
       });
     }
-    if (!qrActive && section === 'scan') initCamera();
+
+    if (!qrReader) {
+      initCamera();
+    }
   }
 }
 
