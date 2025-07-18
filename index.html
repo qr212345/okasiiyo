@@ -60,32 +60,6 @@
 
   <!-- HTML5 QRコードスキャンライブラリ -->
  <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
- <script>
-    // グローバルに登録
-      window.initCamera = async () => {
-      const qrRegion = document.getElementById('reader');
-      if (!qrRegion) return;
-
-      const html5QrCode = new Html5Qrcode("reader");
-      await html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        qrCodeMessage => {
-          console.log("QRコード内容:", qrCodeMessage);
-          alert(`読み取り成功: ${qrCodeMessage}`);
-        },
-        errorMessage => {
-          console.warn("読み取りエラー:", errorMessage);
-        }
-      );
-    };
-
-window.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('reader')) {
-    window.initCamera();
-  }
-});
-</script>
 
 <script src="./app.js"></script>
 
