@@ -512,6 +512,14 @@ function bindButtons() {
   document.getElementById('btnSaveCSV')?.addEventListener('click', saveToCSV);
   document.getElementById('btnConfirmRanking')?.addEventListener('click', confirmRanking);
 }
+
+// ページロード時にイベントをバインド
+window.addEventListener('DOMContentLoaded', () => {
+  bindButtons();          // ボタンイベント付与
+  loadData();             // 初回データ読み込み
+  renderSeats();          // 表示更新など
+  initCamera();           // QRコードリーダー起動など（必要なら）
+});
 /* ======================================================
  *  初期化
  * ==================================================== */
