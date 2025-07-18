@@ -19,7 +19,7 @@ let msgTimer       = null;
 let seatMap       = {};      // { table01: [player01,…] }
 let playerData    = {};      // { playerId: {…} }
 let actionHistory = [];
-
+let qr;
 /* ======== ユーティリティ ======== */
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -71,19 +71,25 @@ function handleScanSuccess(decodedText) {
   handleRankingMode(decodedText);
 }
 
-function initCamera() {
-  if (qrActive) return;
-  if (!qrReader) qrReader = new Html5Qrcode('reader');
+const qr = new Html5Qrcode("reader");
 
-  qrReader
-    .start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, handleScanSuccess)
-    .then(() => (qrActive = true))
-    .catch(err => {
-      console.error(err);
-      displayMessage('❌ カメラの起動に失敗しました');
-    });
+function initCamera() {
+  if (!qr) qr = new Html5Qrcode("reader");
+  qr.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    decodedText => {
+      console.log("QRコード読み取り:", decodedText);
+    },
+    errorMessage => {
+      console.warn("読み取りエラー:", errorMessage);
+    }
+  );
 }
 
+window.addEventListener('DOMContentLoaded', () => {
+  initCamera();
+});
 /* ======================================================
  *  座席表示 & 操作
  * ==================================================== */
@@ -513,13 +519,16 @@ function bindButtons() {
 
 // ページロード時にイベントをバインド
 window.addEventListener('DOMContentLoaded', () => {
-  bindButtons();  // ボタンイベント付与
+  bindButtons();
   loadActionHistory();
-  loadData();             // 初回データ読み込み
-  renderSeats();          // 表示更新など
-  initCamera(); // QRコードリーダー起動など（必要なら）
+  loadData();
+  renderSeats();
+
+  initCamera();  // ここで初めてHtml5Qrcodeを使うので、確実にライブラリは読み込まれている
+
   startPolling();
 });
+
 /* ======================================================
  *  初期化
  * ==================================================== */
