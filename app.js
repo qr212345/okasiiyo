@@ -71,13 +71,18 @@ function handleScanSuccess(decodedText) {
   handleRankingMode(decodedText);
 }
 
-function initCamera() {
-  if (!qr) qr = new Html5Qrcode("reader");
-  qr.start(
+// app.js内
+async function initCamera() {
+  const qrRegion = document.getElementById('reader');
+  if (!qrRegion) return;
+
+  const html5QrCode = new Html5Qrcode("reader");
+  await html5QrCode.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
-    decodedText => {
-      console.log("QRコード読み取り:", decodedText);
+    qrCodeMessage => {
+      console.log("QRコード内容:", qrCodeMessage);
+      alert(`読み取り成功: ${qrCodeMessage}`);
     },
     errorMessage => {
       console.warn("読み取りエラー:", errorMessage);
@@ -85,8 +90,13 @@ function initCamera() {
   );
 }
 
+// 起動時に実行
 window.addEventListener('DOMContentLoaded', () => {
-  initCamera();
+  if (typeof Html5Qrcode !== 'undefined') {
+    initCamera();
+  } else {
+    console.error("Html5Qrcodeが読み込まれていません");
+  }
 });
 /* ======================================================
  *  座席表示 & 操作
