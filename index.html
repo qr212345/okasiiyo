@@ -40,15 +40,16 @@
         <button id="btnSaveCSV">📄 CSVで保存</button>
       </section>
   　
-      <section>
+      <section id="saveSection" class="section">
         <input id="seatMap" placeholder="座席" />
         <input id="playerData" placeholder="名前" />
         <br />
-      　<button id="btnSave" onclick="sendAllSeatPlayers()">☁ Driveに保存</button>
+        <button id="btnSave" onclick="sendAllSeatPlayers()">☁ Driveに保存</button>
         <button id="btnLoad" onclick="loadData()">📥 Driveから読み込み</button>      
-        <h3>登録済みデータ
+        <h3>登録済みデータ</h3>
         <pre id="result">ここに読み込まれたデータが表示されます</pre>
-       </section>
+      </section>
+
       <!-- 順位登録UI -->
       <section id="rankingSection" class="section" style="display:none">
         <h2>順位登録モード</h2>
