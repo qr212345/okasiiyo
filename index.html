@@ -59,11 +59,39 @@
   </div>
 
   <!-- HTML5 QRコードスキャンライブラリ -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.7"></script>
-   
-  <script type="module" src="./app.js"></script>
+  <script type="module">
+  import { Html5Qrcode } from "https://unpkg.com/html5-qrcode?module";
 
- <script>
+  window.initCamera = () => {
+    const qrRegion = document.getElementById('reader');
+    if (!qrRegion) return;
+
+    const qrCodeScanner = new Html5Qrcode("reader");
+    qrCodeScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      qrCodeMessage => {
+        console.log("QRコード:", qrCodeMessage);
+        // 適宜ハンドラーを差し替えてください
+        if (window.handleQRCode) window.handleQRCode(qrCodeMessage);
+      },
+      err => { /* 読み取り失敗 */ }
+    ).catch(err => {
+      console.error("カメラ起動エラー:", err);
+    });
+  };
+
+  // ページ読み込み後にカメラを起動（必要なら）
+  window.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('reader')) {
+      window.initCamera();
+    }
+  });
+</script>
+
+<script type="module" src="./app.js"></script>
+
+<script>
   window.addEventListener('load', () => {
     if (window.loadData) {
       window.loadData();
