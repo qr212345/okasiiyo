@@ -1,7 +1,7 @@
 /**********************
  * ババ抜き大会管理 *
  **********************/
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwGakzxdshT_VGIerXxrUxMWH8oq2_8Z6RD1_bmT1awA0WjNim45OI3wf2A_n5QyJI/exec'; // ← あなたのGAS公開URLを入れてください
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxqJTqeTVxJgs-uoHPuuoGLqKRvCwgWXhatqmZGVfo58UqvZIOzH1AJbPhPSCekccw/exec'; // ← あなたのGAS公開URLを入れてください
 const POLL_INTERVAL_MS = 20000; // 20秒間隔で他端末変更をチェック
 const SCAN_COOLDOWN_MS = 1500;  // 同じQRを連続読みしない猶予
 /* ====== グローバル状態 ====== */
@@ -466,13 +466,22 @@ async function sendActionHistoryToServer() {
 
 async function loadActionHistoryFromServer() {
   try {
-    const res = await fetch(`${GAS_URL}/actionHistory`);
+    const res = await fetch(`${GAS_URL}?mode=actionHistory`);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
-    if (Array.isArray(data.actionHistory)) {
-      actionHistory = data.actionHistory;
+    
+    // データが配列そのものとして返る場合はこちら
+    if (Array.isArray(data)) {
+      actionHistory = data;
       saveActionHistory(); // ローカルにも保存
     }
+    
+    // データが { actionHistory: [...] } の形式ならこちら
+    else if (Array.isArray(data.actionHistory)) {
+      actionHistory = data.actionHistory;
+      saveActionHistory();
+    }
+
   } catch (e) {
     console.warn('操作履歴読み込み失敗:', e);
   }
