@@ -59,22 +59,29 @@
   </div>
 
   <!-- HTML5 QRコードスキャンライブラリ -->
- <script type="module">
+<script type="module">
 import { Html5Qrcode } from "https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.esm.js";
 
 window.initCamera = () => {
-  const qrReader = new Html5Qrcode("reader");
-  qrReader.start(
+  const html5QrCode = new Html5Qrcode("reader");
+  html5QrCode.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
     qrCodeMessage => {
       console.log("QRコード:", qrCodeMessage);
-      // your handler here
+      // QRコード処理
     },
-    err => {}
-  );
+    err => {
+      // エラーハンドリング
+    }
+  ).catch(console.error);
 };
+
+window.addEventListener('DOMContentLoaded', () => {
+  window.initCamera();
+});
 </script>
+
 
 <script type="module" src="./app.js"></script>
 
