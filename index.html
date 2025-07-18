@@ -41,8 +41,8 @@
       </section>
   　
       <section id="saveSection" class="section">
-        <button id="btnSaveAll" onclick="sendAllSeatPlayers()">☁ 全座席のプレイヤーをまとめて保存</button>
-        <button id="btnLoad" onclick="loadData()">📥 Driveから読み込み</button>
+        <button id="btnSaveAll">☁ Driveへ保存</button>
+        <button id="btnLoad">📥 Driveから読み込み</button>
         <h3>登録済みデータ</h3>
         <pre id="result" style="white-space:pre-wrap;"></pre> <!-- 結果表示用 -->
       </section>
@@ -64,9 +64,13 @@
   <script type="module" src="./app.js"></script>
 
  <script>
-   window.addEventListener('DOMContentLoaded', () => {
-     loadData(); // ページロード時に自動で読み込む
-   });
+  window.addEventListener('load', () => {
+    if (window.loadData) {
+      window.loadData();
+    } else {
+      console.error('loadData is not available');
+    }
+  });
   </script>
 </body>
 </html>
