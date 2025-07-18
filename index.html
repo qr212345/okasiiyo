@@ -57,7 +57,7 @@
   </div>
 <!-- QRライブラリ -->
 <script
-  src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"
+  src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.10/html5-qrcode.min.js"
   type="text/javascript"
   onload="loadAppScript()"
   onerror="console.error('❌ html5-qrcode の読み込みに失敗')"
@@ -71,8 +71,6 @@
     script.onerror = () => console.error("❌ app.js の読み込みに失敗");
     document.body.appendChild(script);
   }
-</script>
-
 </script>
 </body>
 </html>
