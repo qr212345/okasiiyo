@@ -60,28 +60,32 @@
 
   <!-- HTML5 QRコードスキャンライブラリ -->
 <script type="module">
-import { Html5Qrcode } from "https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.esm.js";
+import { Html5Qrcode } from "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.7/es/index.min.js";
 
 window.initCamera = () => {
-  const html5QrCode = new Html5Qrcode("reader");
-  html5QrCode.start(
+  const qrRegion = document.getElementById('reader');
+  if (!qrRegion) return;
+
+  const qrCodeScanner = new Html5Qrcode("reader");
+  qrCodeScanner.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
     qrCodeMessage => {
       console.log("QRコード:", qrCodeMessage);
-      // QRコード処理
+      if (window.handleQRCode) window.handleQRCode(qrCodeMessage);
     },
-    err => {
-      // エラーハンドリング
-    }
-  ).catch(console.error);
+    err => {}
+  ).catch(err => {
+    console.error("カメラ起動エラー:", err);
+  });
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-  window.initCamera();
+  if (document.getElementById('reader')) {
+    window.initCamera();
+  }
 });
 </script>
-
 
 <script type="module" src="./app.js"></script>
 
