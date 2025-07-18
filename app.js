@@ -76,27 +76,43 @@ async function initCamera() {
   const qrRegion = document.getElementById('reader');
   if (!qrRegion) return;
 
-  const html5QrCode = new Html5Qrcode("reader");
-  await html5QrCode.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    qrCodeMessage => {
-      console.log("QRコード内容:", qrCodeMessage);
-      alert(`読み取り成功: ${qrCodeMessage}`);
-    },
-    errorMessage => {
-      console.warn("読み取りエラー:", errorMessage);
-    }
-  );
+  if (typeof Html5Qrcode === 'undefined') {
+    console.error("Html5Qrcodeが読み込まれていません");
+    return;
+  }
+
+  try {
+    const html5QrCode = new Html5Qrcode("reader");
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      qrCodeMessage => {
+        console.log("QRコード内容:", qrCodeMessage);
+        alert(`読み取り成功: ${qrCodeMessage}`);
+      },
+      errorMessage => {
+        console.warn("読み取りエラー:", errorMessage);
+      }
+    );
+  } catch (err) {
+    console.error("QRコード初期化エラー:", err);
+  }
 }
 
-// 起動時に実行
 window.addEventListener('DOMContentLoaded', () => {
-  if (typeof Html5Qrcode !== 'undefined') {
-    initCamera();
+  // initCamera は QRライブラリが読み込まれた後で呼ぶ
+  initCamera();
+
+  if (typeof loadData === "function") {
+    loadData();
   } else {
-    console.error("Html5Qrcodeが読み込まれていません");
+    console.warn("loadData 関数が見つかりません");
   }
+
+  if (typeof bindButtons === "function") bindButtons();
+  if (typeof loadActionHistory === "function") loadActionHistory();
+  if (typeof renderSeats === "function") renderSeats();
+  if (typeof startPolling === "function") startPolling();
 });
 /* ======================================================
  *  座席表示 & 操作
