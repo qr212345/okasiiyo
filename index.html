@@ -56,14 +56,8 @@
     </main>
   </div>
 <!-- QRライブラリ -->
-<script
-  src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.7/html5-qrcode.min.js"
-  type="text/javascript"
-  onload="loadAppScript()"
-  onerror="console.error('❌ html5-qrcode の読み込みに失敗')"
-></script>
-<!-- app.js をライブラリ読込後に読み込む -->
 <script>
+  // 1. 先に関数を定義
   function loadAppScript() {
     const script = document.createElement('script');
     script.src = './app.js';
@@ -72,5 +66,12 @@
     document.body.appendChild(script);
   }
 </script>
+
+<script
+  src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.7/html5-qrcode.min.js"
+  type="text/javascript"
+  onload="loadAppScript()"
+  onerror="console.error('❌ html5-qrcode の読み込みに失敗')"
+></script>
 </body>
 </html>
