@@ -506,27 +506,22 @@ async function loadData() {
  *  ボタンバインド
  * ==================================================== */
 function bindButtons() {
-  document.getElementById('btnUndo')        ?.addEventListener('click', undoAction);
-  document.getElementById('btnSaveCSV')     ?.addEventListener('click', saveToCSV);
+  document.getElementById('btnSaveAll')?.addEventListener('click', sendAllSeatPlayers);
+  document.getElementById('btnLoad')?.addEventListener('click', loadData);
+  document.getElementById('btnUndo')?.addEventListener('click', undoAction);
+  document.getElementById('btnSaveCSV')?.addEventListener('click', saveToCSV);
   document.getElementById('btnConfirmRanking')?.addEventListener('click', confirmRanking);
-  document.getElementById('btnRefresh')     ?.addEventListener('click', refresh);
-  document.getElementById('btnStore')       ?.addEventListener('click', store);
-  document.getElementById('btnSave')        ?.addEventListener('click', store);
-  document.getElementById('btnLoad')        ?.addEventListener('click', refresh);
 }
-
 /* ======================================================
  *  初期化
  * ==================================================== */
-document.addEventListener('DOMContentLoaded', async () => {
-  loadFromLocalStorage();
-  loadActionHistory();
-  renderSeats();
-  bindButtons();
-  initCamera();
-  startPolling();
-  await loadData();
-});
+function bindButtons() {
+  document.getElementById('btnSaveAll')?.addEventListener('click', sendAllSeatPlayers);
+  document.getElementById('btnLoad')?.addEventListener('click', loadData);
+  document.getElementById('btnUndo')?.addEventListener('click', undoAction);
+  document.getElementById('btnSaveCSV')?.addEventListener('click', saveToCSV);
+  document.getElementById('btnConfirmRanking')?.addEventListener('click', confirmRanking);
+}
 
 /* グローバル公開 */
 Object.assign(window, {
