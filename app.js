@@ -448,7 +448,7 @@ function loadFromLocalStorage() {
 /* ====== 操作履歴共有 ====== */
 async function sendActionHistoryToServer() {
   try {
-    const res = await fetch(`${GAS_URL}/actionHistory`, {
+    const res = await fetch(`${GAS_URL}?mode=actionHistory`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ actionHistory }),
