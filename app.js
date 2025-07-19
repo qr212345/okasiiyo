@@ -5,7 +5,7 @@
 /* ====== 定数・グローバル変数 ====== */
 
 // GAS（Google Apps Script）通信URL
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyItVPS9GN4ePrx6Jj20WagXRq2z73wEKOPKEn6dImrovIAwXoersSwUixxUJSpddU/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyfrLl2JNBYWEgQ7JK6m-lUiQCX08XwExf2fbnNArsXV4OKcIu-7Jf7fNAy0ljuBVg/exec';
 
 // ポーリング間隔（20秒）
 const POLL_INTERVAL_MS = 20000;
