@@ -4,75 +4,53 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ババ抜き大会管理</title>
-
-  <!-- CSS読み込み -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- デバッグ表示用 -->
-  <pre id="view" style="white-space:pre-wrap;"></pre>
 
-  <div id="app">
-    <div id="status" style="margin:8px 0;font-weight:bold;"></div>
+  <div id="messageArea" style="font-weight:bold; margin:8px;"></div>
 
-    <!-- サイドバー -->
-    <nav id="sidebar">
-      <h2>メニュー</h2>
-      <ul>
-        <li id="btnScanMode">📷 QRコードスキャン</li>
-        <li id="btnRankingMode">🥇 順位登録</li>
-        <li onclick="navigateToExternal('https://qr212345.github.io/fajjfiur/')">📊 レート表</li>
-        <li onclick="navigateToExternal('https://qr212345.github.io/asdfghjkl/')">🪑 座席情報</li>
-      </ul>
-    </nav>
+  <!-- 通常スキャン用カメラ -->
+  <div id="reader" style="width:320px; margin-bottom:10px;"></div>
 
-    <!-- メイン表示エリア -->
-    <main id="mainContent">
-      <!-- スキャンUI -->
-      <section id="scanSection" class="section">
-        <h2>QRコードスキャン</h2>
-        <div id="reader" style="width:320px"></div>
-        <div id="messageArea"></div>
-        <div id="seatList"></div>
-        <button id="btnUndo">↩ Undo</button>
-        <button id="btnSaveCSV">📄 CSVで保存</button>
-      </section>
+  <!-- 順位登録用カメラ -->
+  <div id="rankingReader" style="display:none; width:320px; margin-bottom:10px;"></div>
 
-      <section id="saveSection" class="section">
-        <button id="btnSave">☁ Driveへ保存</button>
-        <button id="btnLoad">📥 Driveから読み込み</button>
-        <button id="btnSendAll">📡 全体送信</button> <!-- ← 追加 -->
-        <h3>登録済みデータ</h3>
-        <pre id="result" style="white-space:pre-wrap;"></pre>
-      </section>
+  <!-- 座席一覧 -->
+  <div id="seatList"></div>
 
-      <!-- 順位登録UI -->
-      <section id="rankingSection" class="section" style="display:none">
-        <h2>順位登録モード</h2>
-        <p>QRコードで座席を読み込んでください。</p>
-        <div id="rankingReader" style="width:320px;"></div>
-        <ul id="rankingList" class="draggable-list"></ul>
-        <button id="btnConfirmRanking">✅ 順位決定</button>
-      </section>
-    </main>
+  <!-- 順位登録リスト -->
+  <ul id="rankingList" class="draggable-list" style="margin-top:20px;"></ul>
+
+  <!-- 操作ボタン群 -->
+  <div style="margin-top:20px;">
+    <button id="btnSave">全データ保存</button>
+    <button id="btnLoad">サーバーデータ取得</button>
+    <button id="btnUndo">Undo</button>
+    <button id="btnToggleMode">モード切替</button>
+    <button id="btnConfirmRanking">順位確定</button>
   </div>
-<!-- QRライブラリ -->
-<script>
-  // 1. 先に関数を定義
-  function loadAppScript() {
-    const script = document.createElement('script');
-    script.src = './app.js';
-    script.onload = () => console.log("✅ app.js 読み込み完了");
-    script.onerror = () => console.error("❌ app.js の読み込みに失敗");
-    document.body.appendChild(script);
-  }
-</script>
 
-<script
-  src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.7/html5-qrcode.min.js"
-  type="text/javascript"
-  onload="loadAppScript()"
-  onerror="console.error('❌ html5-qrcode の読み込みに失敗')"
-></script>
+  <!-- セクション管理 -->
+  <div id="scanSection"></div>
+  <div id="rankingSection" style="display:none;"></div>
+
+  <!-- QRコードライブラリ -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.7/html5-qrcode.min.js"
+    type="text/javascript"
+    onload="loadAppScript()"
+    onerror="console.error('❌ html5-qrcode の読み込みに失敗')"
+  ></script>
+
+  <script>
+    function loadAppScript() {
+      const script = document.createElement('script');
+      script.src = './app.js';
+      script.onload = () => console.log("✅ app.js 読み込み完了");
+      script.onerror = () => console.error("❌ app.js の読み込みに失敗");
+      document.body.appendChild(script);
+    }
+  </script>
 </body>
 </html>
