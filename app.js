@@ -444,92 +444,6 @@ function loadFromLocalStorage() {
     actionHistory = [];
   }
 }
-
-/* ====== 操作履歴共有 ====== */
-async function sendActionHistoryToServer(actionHistory) {
-  try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'saveActionHistory', actionHistory }),
-    });
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const data = await res.json();
-    console.log('操作履歴保存成功:', data);
-  } catch (e) {
-    console.error('操作履歴共有失敗:', e);
-  }
-}
-
-function saveActionHistory() {
-  localStorage.setItem('actionHistory', JSON.stringify(actionHistory));
-}
-
-function loadActionHistoryFromLocal() {
-  const hist = localStorage.getItem('actionHistory');
-  try {
-    actionHistory = hist ? JSON.parse(hist) : [];
-  } catch {
-    actionHistory = [];
-  }
-}
-/* ====== Google Drive連携（GAS） ====== */
-async function pollDrive() {
-  if (isSaving) return;
-  const loaded = await loadJson();
-  if (!loaded || !loaded.seatMap) return;
-
-  const changed =
-    JSON.stringify(seatMap) !== JSON.stringify(loaded.seatMap) ||
-    JSON.stringify(playerData) !== JSON.stringify(loaded.playerData);
-
-  if (changed) {
-    seatMap = loaded.seatMap;
-    playerData = loaded.playerData;
-    renderSeats();
-    displayMessage('☁ 他端末の変更を反映しました');
-  }
-}
-
-function startPolling() {
-  if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(pollDrive, POLL_INTERVAL_MS);
-}
-
-function stopPolling() {
-  if (pollTimer) clearInterval(pollTimer);
-  pollTimer = null;
-}
-
-/* ====== データ保存 ====== */
-async function store() {
-  isSaving = true;
-  stopPolling();
-
-  try {
-    const current = await loadJson();
-    if (!current) {
-      displayMessage('最新データ取得に失敗しました');
-      return;
-    }
-
-    const rev = current.rev || 0;
-    const saveResult = await saveJson({ seatMap, playerData }, '', rev);
-
-    if (saveResult && saveResult.ok) {
-      displayMessage(`✅ データ保存成功（rev: ${saveResult.rev}）`);
-    } else {
-      displayMessage(`⚠ 保存に失敗しました（競合またはエラー）`);
-    }
-
-  } catch (e) {
-    displayMessage(`❌ 保存失敗: ${e.message}`);
-    console.error(e);
-  } finally {
-    isSaving = false;
-    startPolling();
-  }
-}
 /* ====== 全データ送信（外部連携用） ====== */
 async function sendAllSeatPlayers() {
   if (Object.keys(seatMap).length === 0) {
@@ -559,17 +473,57 @@ async function sendAllSeatPlayers() {
   }
 }
 
-/* ====== データ読み込み ====== */
-async function refresh() {
-  const loaded = await loadJson();
-  if (loaded && loaded.seatMap) {
-    seatMap = loaded.seatMap;
-    playerData = loaded.playerData;
-    renderSeats();
-    displayMessage('☁ 最新データを読み込みました');
+/* ====== 操作履歴共有 ====== */
+/* 操作履歴をGASサーバーに送信（POST） */
+async function sendActionHistoryToServer(actionHistory) {
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'saveActionHistory', actionHistory }),
+    });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    console.log('操作履歴保存成功:', data);
+  } catch (e) {
+    console.error('操作履歴共有失敗:', e);
   }
 }
-/* ====== 汎用読み込み ====== */
+
+/* ローカルに操作履歴を保存 */
+function saveActionHistory() {
+  localStorage.setItem('actionHistory', JSON.stringify(actionHistory));
+}
+
+/* ローカルから操作履歴を読み込み */
+function loadActionHistoryFromLocal() {
+  const hist = localStorage.getItem('actionHistory');
+  try {
+    actionHistory = hist ? JSON.parse(hist) : [];
+  } catch {
+    actionHistory = [];
+  }
+}
+
+/* サーバーから操作履歴を読み込み */
+async function loadActionHistoryFromServer() {
+  try {
+    const response = await fetch(`${GAS_URL}?mode=actionHistory`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
+    actionHistory = data.actionHistory || [];
+    console.log('操作履歴をサーバーから取得:', actionHistory);
+  } catch (error) {
+    console.error('操作履歴の取得に失敗:', error);
+    actionHistory = [];
+  }
+}
+
+/* ====== Google Drive連携（GAS） ====== */
+/* 汎用読み込み */
 async function loadJson(mode = '') {
   try {
     const url = mode ? `${GAS_URL}?mode=${mode}` : GAS_URL;
@@ -577,7 +531,6 @@ async function loadJson(mode = '') {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
     });
-
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
   } catch (error) {
@@ -586,16 +539,15 @@ async function loadJson(mode = '') {
   }
 }
 
-/* ====== 通常データ保存 or 履歴保存 ====== */
+/* 汎用保存 */
 async function saveJson(data, mode = '', rev = 0) {
   try {
     const url = mode ? `${GAS_URL}?mode=${mode}` : GAS_URL;
     const response = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...data, rev }),
     });
-
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
   } catch (err) {
@@ -604,24 +556,66 @@ async function saveJson(data, mode = '', rev = 0) {
   }
 }
 
-/* ====== 実データ読み込み処理（seatMap/playerData） ====== */
-async function loadData() {
-  const data = await loadJson(); // ← mode未指定なので通常データ読み込み
-  if (!data) {
-    document.getElementById('result').textContent = "読み込みエラー: データ取得に失敗しました";
+/* ====== データ保存 ====== */
+async function store() {
+  if (isSaving) return;
+  isSaving = true;
+  stopPolling();
+
+  try {
+    const current = await loadJson();
+    if (!current) {
+      displayMessage('最新データ取得に失敗しました');
+      return;
+    }
+
+    const rev = current.rev || 0;
+    const saveResult = await saveJson({ seatMap, playerData }, '', rev);
+
+    if (saveResult && saveResult.ok) {
+      displayMessage(`✅ データ保存成功`);
+    } else {
+      displayMessage(`⚠ 保存に失敗しました（競合またはエラー）`);
+    }
+  } catch (e) {
+    displayMessage(`❌ 保存失敗: ${e.message}`);
+    console.error(e);
+  } finally {
+    isSaving = false;
+    startPolling();
+  }
+}
+
+/* ====== 全データ送信（外部連携用） ====== */
+async function sendAllSeatPlayers() {
+  if (Object.keys(seatMap).length === 0) {
+    alert("登録された座席とプレイヤーがありません");
     return;
   }
 
-  if (data.seatMap) {
-    seatMap = data.seatMap;
-    playerData = data.playerData || {};
-    renderSeats();
-    displayMessage('☁ 最新データを読み込みました');
-  }
+  try {
+    const response = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ seatMap, playerData, time: new Date().toISOString() }),
+    });
 
-  document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const data = await response.json();
+
+    if (data.ok) {
+      alert("✅ すべてのデータを保存しました！");
+      await loadData();
+    } else {
+      alert("⚠ 保存に失敗しました");
+    }
+  } catch (err) {
+    alert("❌ 保存エラー: " + err.message);
+  }
 }
-/* ====== データ読み込み詳細表示 ====== */
+
+/* ====== データ読み込み ====== */
 async function loadData() {
   const data = await loadJson();
   if (!data) {
@@ -637,30 +631,17 @@ async function loadData() {
   document.getElementById('result').textContent = JSON.stringify(data, null, 2);
 }
 
+/* ====== プレイヤー追加（履歴に記録＆保存） ====== */
 function addPlayer(seatId, playerId) {
-  // ここで履歴を追加
   actionHistory.push({ type: 'addPlayer', seatId, playerId });
-  saveActionHistory();              // ローカルにも保存
+  saveActionHistory();              // ローカルに保存
   sendActionHistoryToServer(actionHistory); // サーバーにも保存
-}
-
-async function loadActionHistoryFromServer() {
-  try {
-    const response = await fetch(GAS_URL);
-    if (!response.ok) throw new Error('Network response was not ok');
-    const data = await response.json();
-    // GASのレスポンスは { actionHistory: [...] } の形なので
-    actionHistory = data.actionHistory || [];
-    console.log('操作履歴をサーバーから取得:', actionHistory);
-  } catch (error) {
-    console.error('操作履歴の取得に失敗:', error);
-    actionHistory = [];
-  }
 }
 
 /* ====== 初期化 ====== */
 async function init() {
   loadFromLocalStorage();
+  loadActionHistoryFromLocal();
   await loadActionHistoryFromServer();
   renderSeats();
   displayMessage('📢 起動しました');
