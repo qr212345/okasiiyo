@@ -1,7 +1,7 @@
 /**********************
  * ババ抜き大会管理 *
  **********************/
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwf3IrDTg-GPCtUvYZNvusxLLyhMbeB4EMr7vTW-flgMXUzjG2DRkzdI2zjov8upM4/exec'; // ← あなたのGAS公開URLを入れてください
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyItVPS9GN4ePrx6Jj20WagXRq2z73wEKOPKEn6dImrovIAwXoersSwUixxUJSpddU/exec'; // ← あなたのGAS公開URLを入れてください
 const POLL_INTERVAL_MS = 20000; // 20秒間隔で他端末変更をチェック
 const SCAN_COOLDOWN_MS = 1500;  // 同じQRを連続読みしない猶予
 /* ====== グローバル状態 ====== */
