@@ -25,7 +25,6 @@ let playerData = {};    // { playerId: { nickname, rate, lastRank, bonus, title 
 let actionHistory = [];// 操作履歴（undo用）
 
 let msgTimer = null;
-let pollTimer = null;
 
 /* ====== ユーティリティ ====== */
 function delay(ms) {
@@ -649,21 +648,7 @@ async function refresh() {
     displayMessage('☁ 最新データを読み込みました');
   }
 }
-// ====ポーリング==== 
-function startPolling() {
-  if (pollTimer) return; // 多重起動防止
-  pollTimer = setInterval(() => {
-    // 例：データを定期取得する
-    loadData();
-  }, POLL_INTERVAL_MS);
-}
 
-function stopPolling() {
-  if (pollTimer) {
-    clearInterval(pollTimer);
-    pollTimer = null;
-  }
-}
 /* ====== 初期化 ====== */
 async function init() {
   loadFromLocalStorage();
@@ -681,7 +666,24 @@ async function init() {
   await stopAllCameras();
   await initCamera();
 
-  startPolling();
+  // ポーリング開始（多重起動防止）
+function startPolling() {
+  if (pollTimer) return; // すでに起動中なら何もしない
+
+  pollTimer = setInterval(() => {
+    console.log('Polling: 最新データを取得中...');
+    loadData();  // loadDataはサーバーからデータ取得＆画面反映する関数
+  }, POLL_INTERVAL_MS);
+}
+
+// ポーリング停止
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+    console.log('Pollingを停止しました');
+  }
+}
 
   // ボタンイベント登録はここで
   document.getElementById('btnSave').onclick = store;
