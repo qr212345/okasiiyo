@@ -22,7 +22,7 @@ let lastScannedText = '';
 
 let seatMap = {};       // { table01: [player01, player02, ...] }
 let playerData = {};    // { playerId: { nickname, rate, lastRank, bonus, title } }
-let actionHistory = []; // 操作履歴（undo用）
+let actionHistory = [];// 操作履歴（undo用）
 
 let msgTimer = null;
 
@@ -446,35 +446,31 @@ function loadFromLocalStorage() {
 }
 
 /* ====== 操作履歴共有 ====== */
-async function sendActionHistoryToServer() {
+async function sendActionHistoryToServer(actionHistory) {
   try {
-    const res = await fetch(`${GAS_URL}?mode=actionHistory`, {
+    const res = await fetch(GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ actionHistory }),
+      body: JSON.stringify({ mode: 'saveActionHistory', actionHistory }),
     });
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    console.log('操作履歴保存成功:', data);
   } catch (e) {
-    console.warn('操作履歴共有失敗:', e);
+    console.error('操作履歴共有失敗:', e);
   }
 }
 
-async function loadActionHistoryFromServer() {
+function saveActionHistory() {
+  localStorage.setItem('actionHistory', JSON.stringify(actionHistory));
+}
+
+function loadActionHistoryFromLocal() {
+  const hist = localStorage.getItem('actionHistory');
   try {
-    const res = await fetch(`${GAS_URL}?mode=actionHistory`);
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const data = await res.json();
-
-    if (Array.isArray(data)) {
-      actionHistory = data;
-      saveActionHistory();
-    } else if (Array.isArray(data.actionHistory)) {
-      actionHistory = data.actionHistory;
-      saveActionHistory();
-    }
-
-  } catch (e) {
-    console.warn('操作履歴読み込み失敗:', e);
+    actionHistory = hist ? JSON.parse(hist) : [];
+  } catch {
+    actionHistory = [];
   }
 }
 /* ====== Google Drive連携（GAS） ====== */
@@ -641,6 +637,13 @@ async function loadData() {
   document.getElementById('result').textContent = JSON.stringify(data, null, 2);
 }
 
+function addPlayer(seatId, playerId) {
+  // ここで履歴を追加
+  actionHistory.push({ type: 'addPlayer', seatId, playerId });
+  saveActionHistory();              // ローカルにも保存
+  sendActionHistoryToServer(actionHistory); // サーバーにも保存
+}
+
 /* ====== 初期化 ====== */
 async function init() {
   loadFromLocalStorage();
@@ -649,7 +652,8 @@ async function init() {
   displayMessage('📢 起動しました');
   await initCamera();
   startPolling();
-
+  console.log('初期化完了、現在の操作履歴:', actionHistory);
+}
   // ボタンイベント登録
   document.getElementById('btnSave').onclick = store;
   document.getElementById('btnLoad').onclick = refresh;
@@ -658,6 +662,5 @@ async function init() {
   document.getElementById('btnRankingMode').onclick = () => navigate('ranking');
   document.getElementById('btnScanMode').onclick = () => navigate('scan');
   document.getElementById('btnConfirmRanking').onclick = confirmRanking;
-}
 
 window.onload = init;
