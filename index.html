@@ -43,14 +43,19 @@
     onerror="console.error('❌ html5-qrcode の読み込みに失敗')"
   ></script>
 
-  <script>
-    function loadAppScript() {
-      const script = document.createElement('script');
-      script.src = './app.js';
-      script.onload = () => console.log("✅ app.js 読み込み完了");
-      script.onerror = () => console.error("❌ app.js の読み込みに失敗");
-      document.body.appendChild(script);
-    }
-  </script>
+<script>
+  function loadAppScript() {
+    console.log("✅ html5-qrcode 読み込み完了。続けて app.js を読み込みます...");
+    const script = document.createElement('script');
+    script.src = './app.js'; // あなたのapp.jsへのパス
+    script.onload = () => {
+      if (typeof init === 'function') {
+        init(); // アプリ初期化
+      }
+    };
+    document.body.appendChild(script);
+  }
+</script>
+
 </body>
 </html>
