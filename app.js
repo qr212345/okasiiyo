@@ -1,7 +1,7 @@
 /**********************
  * ババ抜き大会管理 *
  **********************/
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxqJTqeTVxJgs-uoHPuuoGLqKRvCwgWXhatqmZGVfo58UqvZIOzH1AJbPhPSCekccw/exec'; // ← あなたのGAS公開URLを入れてください
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxmJBBExwwGdWCMVxb0ru9F9zp6AzDjfaSeXC9nu5myThkimCEu85sZqyeXGhN4bEE/exec'; // ← あなたのGAS公開URLを入れてください
 const POLL_INTERVAL_MS = 20000; // 20秒間隔で他端末変更をチェック
 const SCAN_COOLDOWN_MS = 1500;  // 同じQRを連続読みしない猶予
 /* ====== グローバル状態 ====== */
@@ -642,6 +642,20 @@ function addPlayer(seatId, playerId) {
   actionHistory.push({ type: 'addPlayer', seatId, playerId });
   saveActionHistory();              // ローカルにも保存
   sendActionHistoryToServer(actionHistory); // サーバーにも保存
+}
+
+async function loadActionHistoryFromServer() {
+  try {
+    const response = await fetch(GAS_URL);
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
+    // GASのレスポンスは { actionHistory: [...] } の形なので
+    actionHistory = data.actionHistory || [];
+    console.log('操作履歴をサーバーから取得:', actionHistory);
+  } catch (error) {
+    console.error('操作履歴の取得に失敗:', error);
+    actionHistory = [];
+  }
 }
 
 /* ====== 初期化 ====== */
