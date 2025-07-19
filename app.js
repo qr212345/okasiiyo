@@ -25,6 +25,7 @@ let playerData = {};    // { playerId: { nickname, rate, lastRank, bonus, title 
 let actionHistory = [];// 操作履歴（undo用）
 
 let msgTimer = null;
+let pollTimer = null;
 
 /* ====== ユーティリティ ====== */
 function delay(ms) {
@@ -648,19 +649,41 @@ async function refresh() {
     displayMessage('☁ 最新データを読み込みました');
   }
 }
+// ====ポーリング==== 
+function startPolling() {
+  if (pollTimer) return; // 多重起動防止
+  pollTimer = setInterval(() => {
+    // 例：データを定期取得する
+    loadData();
+  }, POLL_INTERVAL_MS);
+}
 
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
 /* ====== 初期化 ====== */
 async function init() {
   loadFromLocalStorage();
   loadActionHistoryFromLocal();
-  await loadActionHistoryFromServer();
+
+  try {
+    await loadActionHistoryFromServer();
+  } catch(e) {
+    console.warn('操作履歴の取得に失敗:', e);
+  }
+
   renderSeats();
   displayMessage('📢 起動しました');
+
+  await stopAllCameras();
   await initCamera();
+
   startPolling();
-  console.log('初期化完了、現在の操作履歴:', actionHistory);
-}
-  // ボタンイベント登録
+
+  // ボタンイベント登録はここで
   document.getElementById('btnSave').onclick = store;
   document.getElementById('btnLoad').onclick = refresh;
   document.getElementById('btnUndo').onclick = undoAction;
@@ -669,4 +692,7 @@ async function init() {
   document.getElementById('btnScanMode').onclick = () => navigate('scan');
   document.getElementById('btnConfirmRanking').onclick = confirmRanking;
 
-window.onload = init;
+  console.log('初期化完了、現在の操作履歴:', actionHistory);
+}
+
+window.addEventListener('load', init);
