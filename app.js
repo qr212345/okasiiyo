@@ -446,11 +446,6 @@ function loadFromLocalStorage() {
 }
 
 /* ====== 操作履歴共有 ====== */
-function saveActionHistory() {
-  localStorage.setItem('actionHistory', JSON.stringify(actionHistory));
-  sendActionHistoryToServer();
-}
-
 async function sendActionHistoryToServer() {
   try {
     const res = await fetch(`${GAS_URL}/actionHistory`, {
@@ -469,15 +464,11 @@ async function loadActionHistoryFromServer() {
     const res = await fetch(`${GAS_URL}?mode=actionHistory`);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
-    
-    // データが配列そのものとして返る場合はこちら
+
     if (Array.isArray(data)) {
       actionHistory = data;
-      saveActionHistory(); // ローカルにも保存
-    }
-    
-    // データが { actionHistory: [...] } の形式ならこちら
-    else if (Array.isArray(data.actionHistory)) {
+      saveActionHistory();
+    } else if (Array.isArray(data.actionHistory)) {
       actionHistory = data.actionHistory;
       saveActionHistory();
     }
@@ -486,7 +477,6 @@ async function loadActionHistoryFromServer() {
     console.warn('操作履歴読み込み失敗:', e);
   }
 }
-
 /* ====== Google Drive連携（GAS） ====== */
 async function pollDrive() {
   if (isSaving) return;
@@ -528,7 +518,7 @@ async function store() {
     }
 
     const rev = current.rev || 0;
-    const saveResult = await saveJson({ seatMap, playerData }, rev);
+    const saveResult = await saveJson({ seatMap, playerData }, '', rev);
 
     if (saveResult && saveResult.ok) {
       displayMessage(`✅ データ保存成功（rev: ${saveResult.rev}）`);
@@ -544,7 +534,6 @@ async function store() {
     startPolling();
   }
 }
-
 /* ====== 全データ送信（外部連携用） ====== */
 async function sendAllSeatPlayers() {
   if (Object.keys(seatMap).length === 0) {
