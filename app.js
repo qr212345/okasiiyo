@@ -584,23 +584,28 @@ async function refresh() {
     displayMessage('☁ 最新データを読み込みました');
   }
 }
-
-/* ====== GASデータロード ====== */
-async function loadJson() {
+/* ====== 汎用読み込み ====== */
+async function loadJson(mode = '') {
   try {
-    const response = await fetch(GAS_URL);
+    const url = mode ? `${GAS_URL}?mode=${mode}` : GAS_URL;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
   } catch (error) {
-    console.error('loadJson error:', error);
+    console.error(`loadJson (${mode}) error:`, error);
     return null;
   }
 }
 
-/* ====== GASデータ保存 ====== */
-async function saveJson(data, rev = 0) {
+/* ====== 通常データ保存 or 履歴保存 ====== */
+async function saveJson(data, mode = '', rev = 0) {
   try {
-    const response = await fetch(GAS_URL, {
+    const url = mode ? `${GAS_URL}?mode=${mode}` : GAS_URL;
+    const response = await fetch(url, {
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...data, rev }),
@@ -609,11 +614,28 @@ async function saveJson(data, rev = 0) {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return await response.json();
   } catch (err) {
-    console.error("saveJson error:", err);
+    console.error(`saveJson (${mode}) error:`, err);
     return null;
   }
 }
 
+/* ====== 実データ読み込み処理（seatMap/playerData） ====== */
+async function loadData() {
+  const data = await loadJson(); // ← mode未指定なので通常データ読み込み
+  if (!data) {
+    document.getElementById('result').textContent = "読み込みエラー: データ取得に失敗しました";
+    return;
+  }
+
+  if (data.seatMap) {
+    seatMap = data.seatMap;
+    playerData = data.playerData || {};
+    renderSeats();
+    displayMessage('☁ 最新データを読み込みました');
+  }
+
+  document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+}
 /* ====== データ読み込み詳細表示 ====== */
 async function loadData() {
   const data = await loadJson();
