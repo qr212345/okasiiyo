@@ -52,6 +52,9 @@ let msgTimer = null;
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+function loadAppScript() {
+  init();
+}
 
 /**
  * 画面のメッセージ表示・非表示制御
