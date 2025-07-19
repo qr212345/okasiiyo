@@ -638,6 +638,17 @@ function addPlayer(seatId, playerId) {
   sendActionHistoryToServer(actionHistory); // サーバーにも保存
 }
 
+// ====== データ再読み込み ======
+async function refresh() {
+  const loaded = await loadJson();
+  if (loaded && loaded.seatMap) {
+    seatMap    = loaded.seatMap;
+    playerData = loaded.playerData;
+    renderSeats();
+    displayMessage('☁ 最新データを読み込みました');
+  }
+}
+
 /* ====== 初期化 ====== */
 async function init() {
   loadFromLocalStorage();
